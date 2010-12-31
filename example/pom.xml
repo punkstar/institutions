@@ -1,7 +1,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>uk.ac.bath.cs.agents.asinst</groupId>
-    <artifactId>institution.factory</artifactId>
+    <artifactId>example</artifactId>
     <version>0.0.1</version>
     <parent>
         <groupId>org.iids.aos</groupId>
@@ -9,7 +9,7 @@
         <version>2.0-m2</version>
     </parent>
     <properties>
-        <org.iids.aos.install.type>service</org.iids.aos.install.type>
+        <org.iids.aos.install.type>agent</org.iids.aos.install.type>
         <org.iids.aos.install.path>${user.home}/agentscape</org.iids.aos.install.path>
     </properties>
     <repositories>
@@ -25,12 +25,6 @@
             <version>2.0-m2</version>
             <scope>provided</scope>
         </dependency>
-        <dependency>
-            <groupId>uk.ac.bath.cs.agents.asinst</groupId>
-            <artifactId>institution</artifactId>
-            <version>0.0.1</version>
-            <scope>compile</scope>
-        </dependency>
     </dependencies>
     <build>
         <plugins>
@@ -39,13 +33,10 @@
                 <artifactId>maven-jar-plugin</artifactId>
                 <configuration>
                     <archive>
-                        <manifest>                       
+                        <manifest>
+                            <mainClass>uk.ac.bath.cs.agents.asinst.ExampleAgent</mainClass>
                             <addClasspath>true</addClasspath>
                         </manifest>
-                        <manifestEntries>
-                            <Service-Class>uk.ac.bath.cs.agents.asinst.InstitutionFactoryServiceImpl</Service-Class>
-                            <Service-Interface>uk.ac.bath.cs.agents.asinst.InstitutionFactoryService</Service-Interface> 
-                        </manifestEntries>
                     </archive>
                 </configuration>
             </plugin>
