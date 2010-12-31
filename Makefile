@@ -1,4 +1,4 @@
-all: institution factory example
+all: shared institution factory example
 
 factory:
 	cd institution.factory && mvn install
@@ -9,4 +9,7 @@ institution:
 example:
 	cd example && mvn install
 
-.PHONY: factory institution example
+shared:
+	cd institution.shared && mvn install
+
+.PHONY: factory institution example shared
