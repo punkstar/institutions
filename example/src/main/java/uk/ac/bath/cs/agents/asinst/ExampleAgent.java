@@ -1,30 +1,28 @@
 package uk.ac.bath.cs.agents.asinst;
 
 import org.iids.aos.agent.Agent;
-import org.iids.aos.log.Log;
 import org.iids.aos.service.ServiceBroker;
 
-import java.util.Calendar;
-import java.text.SimpleDateFormat;
-
-import uk.ac.bath.cs.agents.asinst.InstitutionService;
+import uk.ac.bath.cs.agents.asinst.Log;
+import uk.ac.bath.cs.agents.asinst.InstitutionFactoryService;
 
 public class ExampleAgent extends Agent {
     private ServiceBroker _broker;
     
+    @Override
     public void run() {
-        _log("Example agent has started");
+        Log.message("Example agent has started");
         
-        InstitutionService institution = this._requestInstitution();
+        Log.message(this._getService().hello());
         
-        _log("Requested institution");
+        Log.message("Requested institution");
     }
     
-    protected InstitutionService _requestInstitution() {
+    protected InstitutionFactoryService _getService() {
         try {
-            return this._getServiceBroker().bind(InstitutionService.class);
+            return this._getServiceBroker().bind(InstitutionFactoryService.class);
         } catch (Exception e) {
-            _log(String.format("Exception: %s", e.getMessage()));
+            Log.message(String.format("Exception: %s", e.getMessage()));
             return null;
         }
     }
@@ -38,17 +36,6 @@ public class ExampleAgent extends Agent {
     }
     
     public void cleanUp() {
-        _log("Example agent has finished");
-    }
-    
-    
-    private void _log(String message) {
-        Log.console(String.format("[%s] %s", _getTime(), message));
-    }
-    
-    private String _getTime() {
-        Calendar cal = Calendar.getInstance();
-        SimpleDateFormat sdf = new SimpleDateFormat("hh:mm:ss");
-        return sdf.format(cal.getTime());
+        Log.message("Example agent has finished");
     }
 }

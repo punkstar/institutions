@@ -4,5 +4,5 @@ import org.iids.aos.service.Service;
 import org.iids.aos.service.ServiceListener;
 
 public interface InstitutionFactoryService extends Service {
-    
+    public String hello();
 }
