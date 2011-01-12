@@ -1,15 +1,15 @@
 all: shared institution factory example
 
 factory:
-	cd institution.factory && mvn install
+	cd institution.factory && mvn clean compile install
 
 institution:
-	cd institution && mvn install -e
+	cd institution && mvn clean compile install
 
 example:
-	cd example && mvn install
+	cd example && mvn clean compile install
 
 shared:
-	cd institution.shared && mvn install
+	cd institution.shared && mvn clean compile install
 
 .PHONY: factory institution example shared

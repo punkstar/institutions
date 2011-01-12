@@ -4,16 +4,21 @@ import org.iids.aos.agent.Agent;
 import org.iids.aos.service.ServiceBroker;
 
 import uk.ac.bath.cs.agents.asinst.Log;
-import uk.ac.bath.cs.agents.asinst.InstitutionFactoryService;
 
 public class ExampleAgent extends Agent {
     private ServiceBroker _broker;
+    
+    public ExampleAgent() {
+        super();
+    }
     
     @Override
     public void run() {
         Log.message("Example agent has started");
         
-        Log.message(this._getService().hello());
+        InstitutionFactoryService service = this._getService();
+        
+        Log.message(service.hello());
         
         Log.message("Requested institution");
     }
