@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="example/src/main/java"/>
+	<classpathentry kind="src" path="institution.factory/src/main/java"/>
+	<classpathentry kind="src" path="institution.shared/src/main/java"/>
+	<classpathentry kind="src" path="institution/src/main/java"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="/Users/nrj/agentscape/lib/system/xmlrpc-2.0.1.jar"/>
+	<classpathentry kind="lib" path="/Users/nrj/agentscape/lib/system/oncrpc-1.0.5-mt.jar"/>
+	<classpathentry kind="lib" path="/Users/nrj/agentscape/lib/system/log4j-1.2.16.jar"/>
+	<classpathentry kind="lib" path="/Users/nrj/agentscape/lib/system/commons-logging-1.1.1.jar"/>
+	<classpathentry kind="lib" path="/Users/nrj/agentscape/lib/system/commons-lang-2.4.jar"/>
+	<classpathentry kind="lib" path="/Users/nrj/agentscape/lib/system/commons-codec-1.4.jar"/>
+	<classpathentry kind="lib" path="/Users/nrj/agentscape/lib/system/bcprov-jdk15-140.jar"/>
+	<classpathentry kind="lib" path="/Users/nrj/agentscape/lib/system/aos-util-2.0-m2.jar"/>
+	<classpathentry kind="lib" path="/Users/nrj/agentscape/lib/system/aos-kernel-2.0-m2.jar"/>
+	<classpathentry kind="lib" path="/Users/nrj/agentscape/lib/system/agentscape-core-2.0-m2.jar"/>
+	<classpathentry kind="lib" path="/Users/nrj/agentscape/lib/shared/log4j-1.2.16.jar"/>
+	<classpathentry kind="lib" path="/Users/nrj/agentscape/lib/shared/DirectoryServiceInterface-1.0.jar"/>
+	<classpathentry kind="lib" path="/Users/nrj/agentscape/lib/shared/DirectoryServiceBackend-1.0.jar"/>
+	<classpathentry kind="lib" path="/Users/nrj/agentscape/lib/shared/blackboard-service-interface-1.0.jar"/>
+	<classpathentry kind="output" path="institution.factory/target/classes"/>
+</classpath>
