@@ -12,4 +12,7 @@ example:
 shared:
 	cd institution.shared && mvn clean compile install
 
-.PHONY: factory institution example shared
+clean: 
+	rm -f ~/agentscape/lib/shared/institution.shared-0.0.1.jar ~/agentscape/lib/services/institution-0.0.1.jar ~/agentscape/lib/services/institution.factory-0.0.1.jar ~/agentscape/agents/example-0.0.1.jar
+
+.PHONY: factory institution example shared clean

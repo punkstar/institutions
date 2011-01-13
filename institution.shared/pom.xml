@@ -25,6 +25,11 @@
             <version>2.0-m2</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>org.iids.aos</groupId>
+            <artifactId>DirectoryServiceInterface</artifactId>
+            <version>1.0</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

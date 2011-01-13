@@ -1,9 +1,8 @@
 package uk.ac.bath.cs.agents.asinst;
 
 import org.iids.aos.agent.Agent;
+import org.iids.aos.directoryservice.DSRecordIdentifier;
 import org.iids.aos.service.ServiceBroker;
-
-import uk.ac.bath.cs.agents.asinst.Log;
 
 public class ExampleAgent extends Agent {
     private ServiceBroker _broker;
@@ -18,7 +17,7 @@ public class ExampleAgent extends Agent {
         
         InstitutionFactoryService service = this._getService();
         
-        Log.message(service.hello());
+        DSRecordIdentifier rid = service.createInstitution("phonecall", "{events:{violations:[e1,e2,e3,e4],fluents:[f1,f2,f3}}");
         
         Log.message("Requested institution");
     }
