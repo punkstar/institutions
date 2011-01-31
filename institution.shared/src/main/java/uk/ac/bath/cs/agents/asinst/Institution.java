@@ -1,7 +1,8 @@
 package uk.ac.bath.cs.agents.asinst;
 
 import org.iids.aos.service.ServiceBroker;
-import org.iids.aos.blackboardservice.*;
+
+import org.iids.aos.blackboardservice.BlackboardService;
 
 class Institution {
     protected ServiceBroker _broker = null;
@@ -13,6 +14,8 @@ class Institution {
     public Institution(ServiceBroker broker, String name) {
         this._setServiceBroker(broker);
         this._name = name;
+        
+        this.__log(String.format("Institution '%s' created", name));
     }
     
     public boolean checkExists() {
@@ -21,6 +24,10 @@ class Institution {
     
     public String hello() {
         return this._getInstService().hello(this._name);
+    }
+    
+    public void participate(NormativeAgent a) {
+        this._getInstService().addAgentParticipant(this._name, a.getPrimaryHandle(), a.getDataDomain());
     }
     
     protected InstitutionService _getInstService() {
@@ -49,5 +56,9 @@ class Institution {
     
     protected ServiceBroker _getServiceBroker() {
         return this._broker;
+    }
+    
+    private void __log(String message) {
+        Log.message(String.format("[%s] %s", this._name, message));
     }
 }

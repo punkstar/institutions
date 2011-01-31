@@ -31,11 +31,10 @@
             <version>1.0</version>
         </dependency>
         <dependency>
-             <groupId>org.iids.aos</groupId>
-             <artifactId>blackboard-service-interface</artifactId>
-             <version>1.0</version>
-             <scope>provided</scope>
-           </dependency>
+            <groupId>org.iids.aos</groupId>
+            <artifactId>blackboard-service-interface</artifactId>
+            <version>1.0</version>
+         </dependency>
     </dependencies>
     <build>
         <plugins>

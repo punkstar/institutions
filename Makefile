@@ -1,12 +1,15 @@
-all: shared institution factory example
+all: shared institution factory example clingo
 
 factory:
 	cd institution.factory && mvn clean compile install
 
+clingo:
+	cd clingo && mvn clean compile install
+
 institution:
 	cd institution && mvn clean compile install
 
-example:
+agent:
 	cd example && mvn clean compile install
 
 shared:
@@ -15,4 +18,4 @@ shared:
 clean: 
 	rm -f ~/agentscape/lib/shared/institution.shared-0.0.1.jar ~/agentscape/lib/services/institution-0.0.1.jar ~/agentscape/lib/services/institution.factory-0.0.1.jar ~/agentscape/agents/example-0.0.1.jar
 
-.PHONY: factory institution example shared clean
+.PHONY: factory institution agent shared clean clingo open
