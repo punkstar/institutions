@@ -4,7 +4,7 @@ import org.iids.aos.service.Service;
 import org.iids.aos.systemservices.communicator.structs.ServiceID;
 
 public interface InstitutionService extends Service {
-    public String hello();
+    public String hello(String name);
 
-    public ServiceID getInstitutionServiceId();
+    public boolean checkExists(String name);
 }

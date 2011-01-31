@@ -13,33 +13,35 @@ public class ExampleAgent extends Agent {
     
     @Override
     public void run() {
-        Log.message("Example agent has started");
+        this.__log("Example agent has started");
         
-        InstitutionFactoryService service = this._getService();
+        ServiceBroker service_broker = this.getServiceBroker();
         
-        DSRecordIdentifier rid = service.createInstitution("phonecall", "{events:{violations:[e1,e2,e3,e4],fluents:[f1,f2,f3}}");
-        
-        Log.message("Requested institution");
-    }
-    
-    protected InstitutionFactoryService _getService() {
         try {
-            return this._getServiceBroker().bind(InstitutionFactoryService.class);
-        } catch (Exception e) {
-            Log.message(String.format("Exception: %s", e.getMessage()));
-            return null;
-        }
-    }
-    
-    protected ServiceBroker _getServiceBroker() {
-        if (this._broker == null) {
-            this._broker = this.getServiceBroker();
-        }
+            this.__log("Connecting to inst1a");
+            Institution inst1a = new Institution(this.getServiceBroker(), "inst1");
         
-        return this._broker;
+            this.__log("Connecting to inst2a");
+            Institution inst2a = new Institution(this.getServiceBroker(), "inst2");
+        
+            this.__log("Connecting to inst1a as inst1b");
+            Institution inst1b = new Institution(this.getServiceBroker(), "inst1");
+        
+            for (int i = 0; i < 100; i++) {
+                this.__log("[inst1a]: " + inst1a.hello());
+                this.__log("[inst2a]: " + inst2a.hello());
+                this.__log("[inst1b]: " + inst1b.hello());
+            }
+        } catch (Exception e) {
+            this.__log("There was an exception: " + e.getMessage());
+        }
     }
     
     public void cleanUp() {
-        Log.message("Example agent has finished");
+        this.__log("Example agent has finished");
+    }
+    
+    private void __log(String message) {
+        Log.message(String.format("[example_agent]: %s", message));
     }
 }

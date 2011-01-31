@@ -4,9 +4,6 @@ import java.util.Calendar;
 import java.text.SimpleDateFormat;
 
 public class Log {
-    /**
-     * Eww..
-     */
     public static void message (String message) {
         Calendar cal = Calendar.getInstance();
         SimpleDateFormat sdf = new SimpleDateFormat("hh:mm:ss");
