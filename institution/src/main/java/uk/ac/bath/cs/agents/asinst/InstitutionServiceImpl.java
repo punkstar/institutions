@@ -33,10 +33,6 @@ public class InstitutionServiceImpl extends AbstractDefaultService implements In
         return "Hello from " + name + "(" + this._instCounter.get(name) + ")";
     }
     
-    public void addExogenousEvent(String inst_name, ExogeneousEvent event) {
-        this._getInst(inst_name).addExogeneousEvent(event);
-    }
-    
     @Override
     public boolean checkExists(String name) {
         return this._insts.containsKey(name);
@@ -93,10 +89,6 @@ public class InstitutionServiceImpl extends AbstractDefaultService implements In
         public VirtualInstitution(String name, Instal instal, InstitutionService instService) {
             this._instal = instal;
             this._instService = instService;
-        }
-        
-        public void addExogeneousEvent(Event e) {
-            
         }
         
         // Conventional generation, etc..

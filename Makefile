@@ -1,4 +1,4 @@
-all: shared institution factory example clingo
+all: shared institution factory agent clingo
 
 factory:
 	cd institution.factory && mvn clean compile install
