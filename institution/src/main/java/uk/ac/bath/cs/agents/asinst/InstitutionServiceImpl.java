@@ -1,58 +1,33 @@
 package uk.ac.bath.cs.agents.asinst;
 
-import org.iids.aos.service.AbstractDefaultService;
-import org.iids.aos.systemservices.communicator.structs.ServiceID;
-
 import java.util.Hashtable;
-import java.util.ArrayList;
 
 import org.iids.aos.blackboardservice.BlackboardItem;
-import org.iids.aos.blackboardservice.BlackboardQuery;
 import org.iids.aos.blackboardservice.BlackboardService;
 import org.iids.aos.blackboardservice.BlackboardService.IBlackboardNotification;
+import org.iids.aos.service.AbstractDefaultService;
 
-import org.iids.aos.systemservices.communicator.structs.AgentHandle;
+import uk.ac.bath.cs.agents.instal.InitiallyFluent;
+import uk.ac.bath.cs.agents.instal.Institution;
+
+/**
+ * 
+ * Institution Service
+ * 
+ *  - Maintains a list of "templates" that can be used to instantiate institutions
+ *  - Maintains a list of institutions that have been instantiated
+ *  	- Allows for the referencing of these instances between agents
+ * 
+ * @author Nick Jones <nj210@bath.ac.uk>
+ *
+ */
 
 public class InstitutionServiceImpl extends AbstractDefaultService implements InstitutionService, IBlackboardNotification {
-    private Hashtable<String, VirtualInstitution> _insts = new Hashtable<String, VirtualInstitution>();
-    private Hashtable<String, ArrayList<AgentHandle>> _participatingAgents = new Hashtable<String, ArrayList<AgentHandle>>();
-    private Hashtable<String, Integer> _instCounter = new Hashtable<String, Integer>();
-    
+	Hashtable<InstitutionTemplateIdentifier, Institution> _templates = new Hashtable<InstitutionTemplateIdentifier, Institution>();
+	Hashtable<InstitutionIdentifier, Institution> _instances = new Hashtable<InstitutionIdentifier, Institution>();
+	
     public InstitutionServiceImpl() {
-        Log.message("Institution service started");
-    }
-
-    @Override
-    public String hello(String name) {
-        if (!this._instCounter.containsKey(name)) {
-            this._instCounter.put(name, 0);
-        } else {
-            this._instCounter.put(name, this._instCounter.get(name) + 1);
-        }
-    
-        return "Hello from " + name + "(" + this._instCounter.get(name) + ")";
-    }
-    
-    @Override
-    public boolean checkExists(String name) {
-        return this._insts.containsKey(name);
-    }
-    
-    public void addAgentParticipant(String name, AgentHandle handle, String dataDomain) {
-        this.__log(String.format("Subscribing to %s", dataDomain));
-                
-        if (this._participatingAgents.get(name) == null) {
-            this._participatingAgents.put(name, new ArrayList<AgentHandle>());
-        }
-        
-        this._participatingAgents.get(name).add(handle);
-        
-        try {
-            BlackboardQuery bbQuery = new BlackboardQuery(dataDomain);
-            this._getBlackboardService().subscribe(bbQuery, this);
-        } catch (Exception e) {
-            this.__log(String.format("Unable to subscribe to agent action feed: %s", e.getMessage()));
-        }
+        this.__log("Started");
     }
     
     protected BlackboardService _getBlackboardService() {
@@ -63,34 +38,57 @@ public class InstitutionServiceImpl extends AbstractDefaultService implements In
         return null;
     }
     
-    @Override
     public void onData(BlackboardItem item) {
         this.__log(String.format("Got bb data item: %s", item.getData().toString()));
-    }
-    
-    private synchronized VirtualInstitution _getInst(String name) {
-        if (this.checkExists(name)) {
-            return this._insts.get(name);
-        } else {
-            return null;
-            // throw new Exception("Institution does not exist.");
-        }
     }
     
     private void __log(String message) {
         Log.message(String.format("[institution_service] %s", message));
     }
-    
-    private class VirtualInstitution {
-        private String _name;
-        private Instal _instal;
-        private InstitutionService _instService;
-        
-        public VirtualInstitution(String name, Instal instal, InstitutionService instService) {
-            this._instal = instal;
-            this._instService = instService;
-        }
-        
-        // Conventional generation, etc..
-    }
+
+    /**
+     * Add a blueprint of an institution to the library of institutions we can instantiate
+     */
+	public InstitutionTemplateIdentifier addInstitutionTemplate(Institution i, String description) {
+		InstitutionTemplateIdentifier ident = new InstitutionTemplateIdentifier(description);
+		this._templates.put(ident, i);
+		return ident;
+	}
+	
+	/**
+	 * Check the existance of a template with the given identifier.
+	 * 
+	 * @param t
+	 * @return
+	 */
+	protected boolean _existsInstitutionTemplate(InstitutionTemplateIdentifier t) {
+		return this._templates.containsKey(t);
+	}
+
+	/**
+	 * Get an already created instantiated institution
+	 * @throws InstitutionNotFoundException 
+	 */
+	public Institution getInstitutionInstance(InstitutionIdentifier i) throws InstitutionNotFoundException {
+		if (this._instances.containsKey(i)) {
+			return this._instances.get(i);
+		} else {
+			throw new InstitutionNotFoundException(String.format("Instantiated Institution of type '%s', with identifier '%s' not found", i.getTemplate().getDescription(), i.toString()));
+		}
+	}
+
+	/**
+	 * Create a new instance of an institution
+	 */
+	public InstitutionIdentifier instantiateInstitution(InstitutionTemplateIdentifier template, InitiallyFluent[] initially) throws InstitutionNotFoundException {
+		if (this._existsInstitutionTemplate(template)) {
+			InstitutionIdentifier ident = new InstitutionIdentifier(template);
+			Institution instance = this._templates.get(template);
+			this._instances.put(ident, instance);
+			
+			return ident;
+		} else {
+			throw new InstitutionNotFoundException(String.format("Institution template with description '%s' not found", template.getDescription()));
+		}
+	}
 }
