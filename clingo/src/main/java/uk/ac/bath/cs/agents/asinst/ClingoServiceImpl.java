@@ -16,12 +16,15 @@ import org.iids.aos.service.AbstractDefaultService;
 
 /**
  * 
+ * An AgentScape service to provide access to Clingo, currently specialised to look for
+ * holdsat(.*) results in the output.
+ * 
  * @author Nick Jones <nj210@bath.ac.uk>
  *
  */
 
 public class ClingoServiceImpl extends AbstractDefaultService implements ClingoService {
-	protected String _instalLibDirectory = "/Users/nrj/Downloads/instal/instal/";
+	protected String _instalLibDirectory = "/Users/nrj/Downloads/instal/instal/lib/";
 	protected String _clingo = "/Users/nrj/bin/clingo";
 	
 	private File _fileDirectory = new File("/Users/nrj/agentscape/asp");
@@ -32,6 +35,9 @@ public class ClingoServiceImpl extends AbstractDefaultService implements ClingoS
 		this._cleanDirectory();
 	}
 	
+	/**
+	 * Entry method.  Solve the asp hosted at a URL.
+	 */
 	public String[] solve(URL url, int answer_sets) {
 		try {
 			this.__log(String.format("Solve request received (URL at %s)", url.toString()));
@@ -40,12 +46,15 @@ public class ClingoServiceImpl extends AbstractDefaultService implements ClingoS
 			
 			return this._extractFluents(this._processFile(asp_file, answer_sets));
 		} catch (IOException e) {
-			e.printStackTrace();
+			this.__log(String.format("Unable to solve: %s", e.getMessage()));
 		}
 		
 		return null;
 	}
 	
+	/**
+	 * Entry method.  Solve the asp held in the string.
+	 */
 	public String[] solve(String asp, int answer_sets) {
 		try {
 			this.__log("Solve request received (String)");
@@ -54,7 +63,7 @@ public class ClingoServiceImpl extends AbstractDefaultService implements ClingoS
 			
 			return this._extractFluents(this._processFile(asp_file, answer_sets));
 		} catch (IOException e) {
-			e.printStackTrace();
+			this.__log(String.format("Unable to solve: %s", e.getMessage()));
 		}
 		
 		return null;
@@ -68,6 +77,14 @@ public class ClingoServiceImpl extends AbstractDefaultService implements ClingoS
 		return this.solve(url, 1);
 	}
 	
+	/**
+	 * Actually execute clingo and return a reader to the stdout
+	 * 
+	 * @param f
+	 * @param answer_sets
+	 * @return
+	 * @throws IOException
+	 */
 	protected BufferedReader _processFile(File f, int answer_sets) throws IOException {
 		String command = this._buildCommand(f, answer_sets);
 		
@@ -81,6 +98,13 @@ public class ClingoServiceImpl extends AbstractDefaultService implements ClingoS
 		return p_out_reader;
 	}
 	
+	/**
+	 * Search the output for holdsat(.*) statements, returning them as an array
+	 * 
+	 * @param reader
+	 * @return
+	 * @throws IOException
+	 */
 	protected String[] _extractFluents(BufferedReader reader) throws IOException {
 		ArrayList<String> fluents = new ArrayList<String>();
 		
@@ -91,6 +115,8 @@ public class ClingoServiceImpl extends AbstractDefaultService implements ClingoS
 		while((line = reader.readLine()) != null) {
 			m = p.matcher(line);
 			
+			this.__log(line);
+			
 			while(m.find()) {
 				fluents.add(m.group());
 			}
@@ -99,6 +125,13 @@ public class ClingoServiceImpl extends AbstractDefaultService implements ClingoS
 		return fluents.toArray(new String[] {});
 	}
 	
+	/**
+	 * Write the contents of a string to a file
+	 * 
+	 * @param s
+	 * @return
+	 * @throws IOException
+	 */
 	protected File _writeStringToFile(String s) throws IOException {
 		File f = this.__createTempFile();
 		
@@ -113,6 +146,13 @@ public class ClingoServiceImpl extends AbstractDefaultService implements ClingoS
 		return f;
 	}
 	
+	/**
+	 * Write the contents of the URL to a file
+	 * 
+	 * @param u
+	 * @return
+	 * @throws IOException
+	 */
 	protected File _writeUrlToFile(URL u) throws IOException {
 		InputStream url_stream = u.openStream();
 		BufferedReader url_reader = new BufferedReader(new InputStreamReader(url_stream));
@@ -134,14 +174,32 @@ public class ClingoServiceImpl extends AbstractDefaultService implements ClingoS
 		return f;
 	}
 	
+	/**
+	 * Construct the command to execute clingo
+	 * 
+	 * @param filename
+	 * @param steps
+	 * @return
+	 */
 	protected String _buildCommand(File filename, int steps) {
-		return String.format(String.format("%s -n %d %s", this._clingo, steps, filename.getAbsoluteFile()));
+		return String.format(String.format("%s -n %d %s %s", this._clingo, steps, this._instalLibDirectory + "{alltrace.lp,basic.lp}", filename.getAbsoluteFile()));
 	}
 	
+	/**
+	 * Remove all of the old files from the output directory
+	 * 
+	 * @TODO Implement
+	 */
 	protected void _cleanDirectory() {
 		return;
 	}
 	
+	/**
+	 * Create a uniquely named file
+	 * 
+	 * @return
+	 * @throws IOException
+	 */
 	private File __createTempFile() throws IOException {
 		File f = File.createTempFile("clingo", null, this._fileDirectory);
 		this.__log(String.format("Temp file created: %s", f.getAbsoluteFile().toString()));

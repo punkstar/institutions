@@ -1,7 +1,5 @@
 package uk.ac.bath.cs.agents.asinst;
 
-import java.net.URL;
-
 import org.iids.aos.service.ServiceBroker;
 
 import uk.ac.bath.cs.agents.instal.CreationEvent;
@@ -15,10 +13,9 @@ import uk.ac.bath.cs.agents.instal.NormativeEvent;
 import uk.ac.bath.cs.agents.instal.Terminates;
 import uk.ac.bath.cs.agents.instal.Type;
 import uk.ac.bath.cs.agents.instal.ViolationEvent;
+import uk.ac.bath.cs.agents.instal.asp.AnsProlog;
 
 public class ExampleAgent extends NormativeAgent {
-    private ServiceBroker _broker;
-    
     public ExampleAgent() {
         super();
     }
@@ -27,17 +24,24 @@ public class ExampleAgent extends NormativeAgent {
     public void run() {
         this.__log("Example agent has started");
         
-        ServiceBroker service_broker = this.getServiceBroker();
-        
         try {
         	this._publishAction("Publishing my actions..");
         	
-//        	AnsProlog asp = new AnsProlog(this._getInstitution(), this._getDomain());
-//        	this._getClingoService().solve(asp.generate().toString());
-        	this._getClingoService().solve(new URL("http://bartley.local:8080/diss/example_asp.asp"));
+        	AnsProlog asp = new AnsProlog(this._getInstitution(), this._getDomain());
+        	String[] fluents = this._getClingoService().solve(asp.generate().toString());
+        	//this._getClingoService().solve(new URL("http://bartley.local:8080/diss/example_asp.asp"));
+        	
+        	if (fluents.length > 0) {
+        		for (int i = 0; i < fluents.length; i++) {
+        			this.__log(String.format("Fluent: %s", fluents[i]));
+        		}
+        	} else {
+        		this.__log("No fluents hold");
+        	}
             
         } catch (Exception e) {
             this.__log("There was an exception: " + e.getMessage());
+            e.printStackTrace();
         }
     }
     
@@ -63,11 +67,26 @@ public class ExampleAgent extends NormativeAgent {
     
     protected Domain _getDomain() {
     	Domain d = new Domain();
+		
+		Type handset = new Type("Handset");
+		Type chunk = new Type("Chunk");
+		Type player = new Type("Player");
+		Type time = new Type("Time");
+		Type channel = new Type("Channel");
+		Type connectionPoint = new Type("ConnectionPoint");
+		
+		Fluent cbusy = new Fluent("cbusy");
+		cbusy.addParameter(connectionPoint).addParameter(time);
     	
-    	Type handset = new Type("Dandset");
-    	
-    	d.concreteType(handset, "handset_1");
-    	d.concreteType(handset, "handset_2");
+		/** Initial fluent values **/
+		d.initially(cbusy.initially("alice", "2"));
+	        
+	    d.concreteType(handset, "handset_1").concreteType(handset, "handset_2");
+	    d.concreteType(chunk, "chunk_1").concreteType(chunk, "chunk_2");
+	    d.concreteType(player, "player_1").concreteType(player, "player_2");
+	    d.concreteType(time, "time_1").concreteType(time, "time_2");
+	    d.concreteType(channel, "channel_1").concreteType(channel, "channel_2");
+	    d.concreteType(connectionPoint, "cp_1").concreteType(connectionPoint, "cp_2");
     	
     	return d;
     }
