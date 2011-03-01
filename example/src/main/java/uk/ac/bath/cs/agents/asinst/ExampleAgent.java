@@ -1,5 +1,7 @@
 package uk.ac.bath.cs.agents.asinst;
 
+import java.net.URL;
+
 import org.iids.aos.service.ServiceBroker;
 
 import uk.ac.bath.cs.agents.instal.CreationEvent;
@@ -13,7 +15,6 @@ import uk.ac.bath.cs.agents.instal.NormativeEvent;
 import uk.ac.bath.cs.agents.instal.Terminates;
 import uk.ac.bath.cs.agents.instal.Type;
 import uk.ac.bath.cs.agents.instal.ViolationEvent;
-import uk.ac.bath.cs.agents.instal.asp.AnsProlog;
 
 public class ExampleAgent extends NormativeAgent {
     private ServiceBroker _broker;
@@ -30,14 +31,10 @@ public class ExampleAgent extends NormativeAgent {
         
         try {
         	this._publishAction("Publishing my actions..");
-            
-//        	this.__log("Adding grid institution template to service");
-//        	InstitutionTemplateIdentifier ident = this._getInstitutionService().addInstitutionTemplate(this._getInstitution(), "grid");
-//        	
-//        	this.__log("Institution has template reference: " + ident.toString());
         	
-        	AnsProlog asp = new AnsProlog(this._getInstitution(), this._getDomain());
-        	this._getClingoService().solve(asp.generate().toString());
+//        	AnsProlog asp = new AnsProlog(this._getInstitution(), this._getDomain());
+//        	this._getClingoService().solve(asp.generate().toString());
+        	this._getClingoService().solve(new URL("http://bartley.local:8080/diss/example_asp.asp"));
             
         } catch (Exception e) {
             this.__log("There was an exception: " + e.getMessage());
