@@ -3,7 +3,7 @@ package uk.ac.bath.cs.agents.asinst;
 import uk.ac.bath.cs.agents.instal.CreationEvent;
 import uk.ac.bath.cs.agents.instal.DissolutionEvent;
 import uk.ac.bath.cs.agents.instal.Domain;
-import uk.ac.bath.cs.agents.instal.ExogeneousEvent;
+import uk.ac.bath.cs.agents.instal.ExogenousEvent;
 import uk.ac.bath.cs.agents.instal.Fluent;
 import uk.ac.bath.cs.agents.instal.Generates;
 import uk.ac.bath.cs.agents.instal.Initiates;
@@ -31,15 +31,15 @@ public class ExampleAgent extends NormativeAgent {
     	    
     	    CreationEvent createdar = new CreationEvent("createdar");
     	    
-    	    ExogeneousEvent priceto = new ExogeneousEvent("priceto");
-    	    ExogeneousEvent bidto = new ExogeneousEvent("bidto");
-    	    ExogeneousEvent desto = new ExogeneousEvent("desto");
+    	    ExogenousEvent priceto = new ExogenousEvent("priceto");
+    	    ExogenousEvent bidto = new ExogenousEvent("bidto");
+    	    ExogenousEvent desto = new ExogenousEvent("desto");
     	    
-    	    ExogeneousEvent annprice = new ExogeneousEvent("annprice");
-    	    ExogeneousEvent annbid = new ExogeneousEvent("annbid");
-    	    ExogeneousEvent annconf = new ExogeneousEvent("annconf");
-    	    ExogeneousEvent annsold = new ExogeneousEvent("annsold");
-    	    ExogeneousEvent annunsold = new ExogeneousEvent("annunsold");
+    	    ExogenousEvent annprice = new ExogenousEvent("annprice");
+    	    ExogenousEvent annbid = new ExogenousEvent("annbid");
+    	    ExogenousEvent annconf = new ExogenousEvent("annconf");
+    	    ExogenousEvent annsold = new ExogenousEvent("annsold");
+    	    ExogenousEvent annunsold = new ExogenousEvent("annunsold");
     	    
     	    annprice.addParameter(auct).addParameter(bidder);
     	    annbid.addParameter(bidder).addParameter(auct);

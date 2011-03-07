@@ -7,7 +7,7 @@ import org.iids.aos.blackboardservice.BlackboardItem;
 import org.iids.aos.blackboardservice.BlackboardService;
 
 import uk.ac.bath.cs.agents.instal.Event;
-import uk.ac.bath.cs.agents.instal.ExogeneousEvent;
+import uk.ac.bath.cs.agents.instal.ExogenousEvent;
 
 abstract class NormativeAgent extends Agent {
     protected void _publishAction(String name) {
@@ -20,7 +20,7 @@ abstract class NormativeAgent extends Agent {
             this.__log(String.format("Unable to publish agent action: %s", e.getMessage()));
         }
     }
-    protected void _publishInstitutionalEvent(InstitutionIdentifier inst, ExogeneousEvent e) {
+    protected void _publishInstitutionalEvent(InstitutionIdentifier inst, ExogenousEvent e) {
     	
     }
     
