@@ -2,7 +2,9 @@ package uk.ac.bath.cs.agents.asinst;
 
 import java.util.Hashtable;
 
+import org.iids.aos.blackboardservice.BlackboardException;
 import org.iids.aos.blackboardservice.BlackboardItem;
+import org.iids.aos.blackboardservice.BlackboardQuery;
 import org.iids.aos.blackboardservice.BlackboardService;
 import org.iids.aos.blackboardservice.BlackboardService.IBlackboardNotification;
 import org.iids.aos.service.AbstractDefaultService;
@@ -28,12 +30,14 @@ public class InstitutionServiceImpl extends AbstractDefaultService implements In
 	
     public InstitutionServiceImpl() {
         this.__log("Service online");
+        
+        BlackboardItemPayload load = new BlackboardItemPayload("test", "test");
     }
     
     protected BlackboardService _getBlackboardService() {
         try {
             return this.getServiceBroker().bind(BlackboardService.class);
-        } catch (Exception e) { this.__log("There was an error using the service broker for the blackboard service."); }
+        } catch (Exception e) { e.printStackTrace(); this.__log("There was an error using the service broker for the blackboard service."); }
         
         return null;
     }
@@ -47,7 +51,13 @@ public class InstitutionServiceImpl extends AbstractDefaultService implements In
     }
     
     public void onData(BlackboardItem item) {
-        this.__log(String.format("Got bb data item: %s", item.getData().toString()));
+    	String payload = item.getData().toString();
+    	String data_domain = item.getMetaValue("data_domain").getValue().toString();
+    	
+        this.__log(String.format("Subscription received: %s from %s", payload, data_domain));
+        
+        // Now that we've received an event occurance, we need to set it to occurred($event, i00) and rerun
+        this.__log("Regenerating institutional state");
     }
     
     private void __log(String message) {
@@ -105,6 +115,15 @@ public class InstitutionServiceImpl extends AbstractDefaultService implements In
 			InstitutionInstance instance = new InstitutionInstance(this.getInstitutionTemplate(template));
 			this._instances.put(ident.toString(), instance);
 			
+			String blackboard_query = "Platform.Global.Institution." + ident.toString();
+			
+	        try {
+				this._getBlackboardService().subscribe(new BlackboardQuery(blackboard_query), this);
+				this.__log(String.format("Subscribed to %s", blackboard_query));
+			} catch (BlackboardException e) {
+				this.__log(String.format("There was an error subscribing to the blackboard (%s)", blackboard_query));
+			}
+			
 			this.__log(String.format("Creating an instance of %s", template.getDescription()));
 			
 			return ident;
@@ -120,7 +139,7 @@ public class InstitutionServiceImpl extends AbstractDefaultService implements In
 	public void evaluate(InstitutionIdentifier ident) throws InstitutionNotFoundException {
 		InstitutionInstance instance = this.getInstitutionInstance(ident);
 		
-		this.__log("Evaluating instance: " + instance.toString());
+		this.__log("Evaluating instance: " + ident.toString());
 		synchronized(instance) {
 			ClingoService c = this._getClingoService();
 			

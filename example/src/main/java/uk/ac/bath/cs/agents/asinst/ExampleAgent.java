@@ -29,6 +29,11 @@ public class ExampleAgent extends NormativeAgent {
     	    Type bidder = new Type("Bidder");
     	    Type auct = new Type("Auct");
     	    
+    	    d.concreteType(bidder, "bidder_1")
+    	     .concreteType(bidder, "bidder_2")
+    	     .concreteType(bidder, "bidder_3")
+    	     .concreteType(auct,   "auctioneer_1");
+    	    
     	    CreationEvent createdar = new CreationEvent("createdar");
     	    
     	    ExogenousEvent priceto = new ExogenousEvent("priceto");
@@ -309,11 +314,13 @@ public class ExampleAgent extends NormativeAgent {
 
             this.__log("Registered template with identifier: " + template);
             InstitutionIdentifier instance = service.instantiateInstitution(template, d);
-            
-            for (int i = 0; i < 5; i++) {
-            	this.__log("Loop " + i);
+
+            this._publishInstitutionalEvent(instance, annbid, new String[] {"bidder_1", "auctioneer_1"});
+
+//            for (int i = 0; i < 5; i++) {
+//            	this.__log("Loop " + i);
             	this._getInstitutionService().evaluate(instance);
-            }
+//            }
             
         } catch (Exception e) {
             this.__log("There was an exception: " + e.getMessage());
