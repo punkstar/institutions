@@ -26,6 +26,14 @@
             <scope>system</scope>
             <systemPath>/Users/nrj/Downloads/ropes-1.2.5/ropes.jar</systemPath>
         </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.0</version>
+            <type>jar</type>
+            <scope>compile</scope> <!-- should be test -->
+            <optional>true</optional>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

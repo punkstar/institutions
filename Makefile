@@ -6,7 +6,7 @@ instal:
 factory:
 	cd institution.factory && mvn clean compile install
 
-clingo:
+clingo: shared
 	cd clingo && mvn clean compile install
 
 institution:
@@ -19,6 +19,6 @@ shared:
 	cd institution.shared && mvn clean compile install
 
 clean: 
-	rm -f ~/agentscape/lib/shared/institution.shared-0.0.1.jar ~/agentscape/lib/services/institution-0.0.1.jar ~/agentscape/lib/services/institution.factory-0.0.1.jar ~/agentscape/agents/example-0.0.1.jar
+	rm -f ~/agentscape/lib/shared/institution.shared-0.0.1.jar ~/agentscape/lib/services/institution-0.0.1.jar ~/agentscape/lib/services/institution.factory-0.0.1.jar ~/agentscape/agents/example-0.0.1.jar ~/agentscape/lib/services/clingo*
 
 .PHONY: factory institution agent shared clean clingo open instal

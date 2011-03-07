@@ -8,9 +8,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.iids.aos.service.AbstractDefaultService;
 
@@ -24,7 +21,7 @@ import org.iids.aos.service.AbstractDefaultService;
  */
 
 public class ClingoServiceImpl extends AbstractDefaultService implements ClingoService {
-	protected String _instalLibDirectory = "/Users/nrj/Downloads/instal/instal/lib/";
+	protected String _instalLibDirectory = "/Users/nrj/Desktop/institutions/clingo/src/main/asp/";
 	protected String _clingo = "/Users/nrj/bin/clingo";
 	
 	private File _fileDirectory = new File("/Users/nrj/agentscape/asp");
@@ -38,14 +35,14 @@ public class ClingoServiceImpl extends AbstractDefaultService implements ClingoS
 	/**
 	 * Entry method.  Solve the asp hosted at a URL.
 	 */
-	public String[] solve(URL url, int answer_sets) {
+	public ClingoResponse solve(URL url, int answer_sets) {
 		try {
 			this.__log(String.format("Solve request received (URL at %s)", url.toString()));
 			
 			File asp_file = this._writeUrlToFile(url);
 			
-			return this._extractFluents(this._processFile(asp_file, answer_sets));
-		} catch (IOException e) {
+			return this._buildResponse(this._processFile(asp_file, answer_sets));
+		} catch (Exception e) {
 			this.__log(String.format("Unable to solve: %s", e.getMessage()));
 		}
 		
@@ -55,37 +52,38 @@ public class ClingoServiceImpl extends AbstractDefaultService implements ClingoS
 	/**
 	 * Entry method.  Solve the asp held in the string.
 	 */
-	public String[] solve(String asp, int answer_sets) {
+	public ClingoResponse solve(String asp, int answer_sets) {
 		try {
 			this.__log("Solve request received (String)");
 			
 			File asp_file = this._writeStringToFile(asp);
 			
-			return this._extractFluents(this._processFile(asp_file, answer_sets));
-		} catch (IOException e) {
+			return this._buildResponse(this._processFile(asp_file, answer_sets));
+		} catch (Exception e) {
 			this.__log(String.format("Unable to solve: %s", e.getMessage()));
 		}
 		
 		return null;
 	}
 	
-	public String[] solve(String asp) {
+	public ClingoResponse solve(String asp) {
 		return this.solve(asp, 1);
 	}
 	
-	public String[] solve(URL url) {
+	public ClingoResponse solve(URL url) {
 		return this.solve(url, 1);
 	}
 	
 	/**
-	 * Actually execute clingo and return a reader to the stdout
+	 * Actually execute clingo
 	 * 
 	 * @param f
 	 * @param answer_sets
 	 * @return
 	 * @throws IOException
+	 * @throws InterruptedException 
 	 */
-	protected BufferedReader _processFile(File f, int answer_sets) throws IOException {
+	protected String _processFile(File f, int answer_sets) throws IOException, InterruptedException {
 		String command = this._buildCommand(f, answer_sets);
 		
 		this.__log("Calling clingo: " + command);
@@ -95,34 +93,29 @@ public class ClingoServiceImpl extends AbstractDefaultService implements ClingoS
 		
 		BufferedReader p_out_reader = new BufferedReader(new InputStreamReader(p_out));
 		
-		return p_out_reader;
+		StringBuilder builder = new StringBuilder();
+		
+		String line;
+		while((line = p_out_reader.readLine()) != null) {
+			builder.append(line);
+ 		}
+		
+		p_out_reader.close();
+		p_out.close();
+		p_err.close();
+		
+		return builder.toString();
 	}
 	
 	/**
-	 * Search the output for holdsat(.*) statements, returning them as an array
+	 * Search the output for holdsat(.*) statements
 	 * 
 	 * @param reader
 	 * @return
 	 * @throws IOException
 	 */
-	protected String[] _extractFluents(BufferedReader reader) throws IOException {
-		ArrayList<String> fluents = new ArrayList<String>();
-		
-		Matcher m;
-		Pattern p = Pattern.compile("holdsat\\((.*?)\\)\\s");
-		
-		String line;
-		while((line = reader.readLine()) != null) {
-			m = p.matcher(line);
-			
-			this.__log(line);
-			
-			while(m.find()) {
-				fluents.add(m.group());
-			}
- 		}
-		
-		return fluents.toArray(new String[] {});
+	protected ClingoResponse _buildResponse(String result) throws IOException {
+		return ClingoResponse.build(result);
 	}
 	
 	/**
@@ -182,7 +175,13 @@ public class ClingoServiceImpl extends AbstractDefaultService implements ClingoS
 	 * @return
 	 */
 	protected String _buildCommand(File filename, int steps) {
-		return String.format(String.format("%s -n %d %s %s", this._clingo, steps, this._instalLibDirectory + "{alltrace.lp,basic.lp}", filename.getAbsoluteFile()));
+		return String.format(
+	        "%s -n %d %s %s %s",
+	        this._clingo, steps,
+	        this._instalLibDirectory + "alltrace.lp",
+	        this._instalLibDirectory + "basic.lp",
+	        filename.getAbsoluteFile()
+	    );
 	}
 	
 	/**
