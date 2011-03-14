@@ -35,7 +35,7 @@ public class ClingoServiceImpl extends AbstractDefaultService implements ClingoS
 	/**
 	 * Entry method.  Solve the asp hosted at a URL.
 	 */
-	public ClingoResponse solve(URL url, int answer_sets) {
+	public ClingoResponse solve(URL url, int answer_sets) throws ClingoException {
 		try {
 			this.__log(String.format("Solve request received (URL at %s)", url.toString()));
 			
@@ -44,15 +44,15 @@ public class ClingoServiceImpl extends AbstractDefaultService implements ClingoS
 			return this._buildResponse(this._processFile(asp_file, answer_sets));
 		} catch (Exception e) {
 			this.__log(String.format("Unable to solve: %s", e.getMessage()));
+			throw new ClingoException(e.getMessage());
 		}
-		
-		return null;
 	}
 	
 	/**
 	 * Entry method.  Solve the asp held in the string.
+	 * @throws Exception 
 	 */
-	public ClingoResponse solve(String asp, int answer_sets) {
+	public ClingoResponse solve(String asp, int answer_sets) throws ClingoException {
 		try {
 			this.__log("Solve request received (String)");
 			
@@ -61,16 +61,15 @@ public class ClingoServiceImpl extends AbstractDefaultService implements ClingoS
 			return this._buildResponse(this._processFile(asp_file, answer_sets));
 		} catch (Exception e) {
 			this.__log(String.format("Unable to solve: %s", e.getMessage()));
+			throw new ClingoException(e.getMessage());
 		}
-		
-		return null;
 	}
 	
-	public ClingoResponse solve(String asp) {
+	public ClingoResponse solve(String asp) throws ClingoException {
 		return this.solve(asp, 1);
 	}
 	
-	public ClingoResponse solve(URL url) {
+	public ClingoResponse solve(URL url) throws ClingoException {
 		return this.solve(url, 1);
 	}
 	

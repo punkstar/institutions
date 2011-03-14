@@ -21,7 +21,8 @@ abstract class NormativeAgent extends Agent {
     	try {
     		this._publish(this.getInstitutionDataDomain(inst), event.asVariablesToString(variables));
     	} catch (Exception e) {
-            this.__log(String.format("Unable to publish institutional event: %s", e.getMessage()));
+            this.__log(String.format("Unable to publish institutional event: '%s' because of %s", event.asVariablesToString(variables), e.getMessage()));
+            e.printStackTrace();
     	}
     }
     

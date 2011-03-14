@@ -56,7 +56,7 @@ public class ClingoResponse implements Serializable {
 		Matcher m_holds = p_holds.matcher(raw_output);
 		
 		while(m_holds.find()) {
-			holds.add(m_holds.group());
+			holds.add(m_holds.group(1));
 		}
 		
 		// Find the execution time

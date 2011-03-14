@@ -1,6 +1,8 @@
 package uk.ac.bath.cs.agents.asinst;
 
 import java.util.Hashtable;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.iids.aos.blackboardservice.BlackboardException;
 import org.iids.aos.blackboardservice.BlackboardItem;
@@ -28,10 +30,12 @@ public class InstitutionServiceImpl extends AbstractDefaultService implements In
 	Hashtable<String, Institution> _templates = new Hashtable<String, Institution>();
 	Hashtable<String, InstitutionInstance> _instances = new Hashtable<String, InstitutionInstance>();
 	
+	Pattern _pattern_instFromDataDomain = Pattern.compile("([\\w-]+)$");
+	
     public InstitutionServiceImpl() {
         this.__log("Service online");
         
-        BlackboardItemPayload load = new BlackboardItemPayload("test", "test");
+        ClingoResponse load_response = new ClingoResponse(null, null, 0);
     }
     
     protected BlackboardService _getBlackboardService() {
@@ -54,10 +58,7 @@ public class InstitutionServiceImpl extends AbstractDefaultService implements In
     	String payload = item.getData().toString();
     	String data_domain = item.getMetaValue("data_domain").getValue().toString();
     	
-        this.__log(String.format("Subscription received: %s from %s", payload, data_domain));
-        
-        // Now that we've received an event occurance, we need to set it to occurred($event, i00) and rerun
-        this.__log("Regenerating institutional state");
+    	this._handleBlackboardEvent(data_domain, payload);
     }
     
     private void __log(String message) {
@@ -85,7 +86,7 @@ public class InstitutionServiceImpl extends AbstractDefaultService implements In
 	}
 	
 	/**
-	 * Check the existance of a template with the given identifier.
+	 * Check the existence of a template with the given identifier.
 	 * 
 	 * @param t
 	 * @return
@@ -93,13 +94,23 @@ public class InstitutionServiceImpl extends AbstractDefaultService implements In
 	protected boolean _existsInstitutionTemplate(InstitutionTemplateIdentifier t) {
 		return this._templates.containsKey(t.toString());
 	}
+	
+	/**
+	 * Check the existence of an instance with a given identifier
+	 * 
+	 * @param i
+	 * @return
+	 */
+	protected boolean _existsInstitutionInstance(InstitutionIdentifier i) {
+		return this._instances.containsKey(i.toString());
+	}
 
 	/**
 	 * Get an already created instantiated institution
 	 * @throws InstitutionNotFoundException 
 	 */
 	public InstitutionInstance getInstitutionInstance(InstitutionIdentifier i) throws InstitutionNotFoundException {
-		if (this._instances.containsKey(i.toString())) {
+		if (this._existsInstitutionInstance(i)) {
 			return this._instances.get(i.toString());
 		} else {
 			throw new InstitutionNotFoundException(String.format("Instantiated Institution of type '%s', with identifier '%s' not found", i.getTemplate().getDescription(), i.toString()));
@@ -141,15 +152,91 @@ public class InstitutionServiceImpl extends AbstractDefaultService implements In
 		
 		this.__log("Evaluating instance: " + ident.toString());
 		synchronized(instance) {
-			ClingoService c = this._getClingoService();
-			
-			ClingoResponse response = c.solve(instance.asAsp());
-			if (response.wasSuccessful()) {
-				this.__log(String.format("Evaluated in %.2fs with %d facts and %d holds", response.getTime(), response.getFacts().length, response.getHolds().length));
-				instance.setHolds(response.getHolds());
-			} else {
-				this.__log("The clingo response was not marked successful");
-			}
+			try {
+				ClingoResponse response = this._sendClingo(instance.asAsp());
+				if (response.wasSuccessful()) {
+					instance.setHolds(response.getHolds());
+				}
+			} catch (ClingoException e) {}
 		}
+	}
+	
+	protected ClingoResponse _sendClingo(String asp) throws ClingoException {
+		ClingoService c = this._getClingoService();
+		ClingoResponse response;
+		
+		try {
+			response = (ClingoResponse) c.solve(asp);
+		} catch (ClingoException e) {
+			this.__log("Received exception from clingo: " + e.getMessage());
+			throw e;
+		}
+		
+		
+		if (response == null) {
+			this.__log("The response was null");
+		} else if (response.wasSuccessful()) {
+			this.__log(String.format("Evaluated in %.2fs with %d facts and %d holds", response.getTime(), response.getFacts().length, response.getHolds().length));
+		} else {
+			this.__log("The clingo response was not marked successful");
+		}
+
+		return response;
+	}
+	
+	protected void _handleBlackboardEvent(String data_domain, String payload) {
+        this.__log(String.format("Subscription received: %s from %s", payload, data_domain));
+        
+        // Now that we've received an event occurance, we need to set it to occurred($event, i00) and rerun
+        this.__log("Regenerating institutional state");
+        
+        InstitutionIdentifier inst_key = InstitutionIdentifier.build(
+        	this._extractInstitutionInstanceFromDataDomain(data_domain)
+        );
+        
+        this.__log(String.format("Institution key: %s", inst_key));
+
+
+
+        if (this._existsInstitutionInstance(inst_key)) {
+			try {
+				InstitutionInstance inst = this.getInstitutionInstance(inst_key);
+				synchronized(inst) {
+					try {
+						// Fix ClassNotFoundException: http://www.agentscape.org/forums/viewtopic.php?pid=258#p258
+				        ClassLoader original = Thread.currentThread().getContextClassLoader();
+				        Thread.currentThread().setContextClassLoader(ClingoResponse.class.getClassLoader());
+						
+				        ClingoResponse response = this._sendClingo(inst.asAsp(payload));
+						if (response.wasSuccessful()) {
+							inst.setHolds(response.getHolds());
+						}
+						
+				        // when finished put back the original classloader
+				        Thread.currentThread().setContextClassLoader(original);
+					} catch (ClingoException e) {}
+				}
+			} catch (InstitutionNotFoundException e) {
+				this.__log(String.format("Unable to load instance, despite every indication that it exists: %s", inst_key.toString()));
+			}
+        } else {
+        	this.__log(String.format("Unknown institution %s", inst_key.toString()));
+        }
+	}
+	
+	/**
+	 * Give a string like Platform.Global.Institution.dutch-1, will return dutch-1
+	 * 
+	 * @param data_domain
+	 * @return
+	 */
+	private String _extractInstitutionInstanceFromDataDomain(String data_domain) {
+		Matcher m = this._pattern_instFromDataDomain.matcher(data_domain);
+		
+		if (m.find()) {
+			return m.group();
+		}
+		
+		return null;
 	}
 }

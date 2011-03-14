@@ -43,8 +43,6 @@ public class InstitutionInstance {
 	/**
 	 * Using the institution specification, provide the ASP
 	 * 
-	 * TODO Use the holdsats to generate the correct ASP
-	 * 
 	 * @return
 	 */
 	public String asAsp() {
@@ -59,6 +57,17 @@ public class InstitutionInstance {
 		for(int i = 0; i < this._holds.length; i++) {
 			builder.append("ifluent(").append(this._holds[i]).append(").\n");
 		}
+		
+		return builder.toString();
+	}
+	
+	public String asAsp(String event) {
+		StringBuilder builder = new StringBuilder(this.asAsp());
+		
+		builder.append("\n% The following event just occurred\n")
+			   .append("occurred(")
+		       .append(event)
+		       .append(", i00).");
 		
 		return builder.toString();
 	}
