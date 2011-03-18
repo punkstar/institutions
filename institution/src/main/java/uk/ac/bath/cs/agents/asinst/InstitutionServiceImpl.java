@@ -1,5 +1,6 @@
 package uk.ac.bath.cs.agents.asinst;
 
+import java.io.Serializable;
 import java.util.Hashtable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -8,6 +9,7 @@ import org.iids.aos.blackboardservice.BlackboardException;
 import org.iids.aos.blackboardservice.BlackboardItem;
 import org.iids.aos.blackboardservice.BlackboardQuery;
 import org.iids.aos.blackboardservice.BlackboardService;
+import org.iids.aos.blackboardservice.DataHandle;
 import org.iids.aos.blackboardservice.BlackboardService.IBlackboardNotification;
 import org.iids.aos.service.AbstractDefaultService;
 
@@ -123,10 +125,12 @@ public class InstitutionServiceImpl extends AbstractDefaultService implements In
 	public InstitutionIdentifier instantiateInstitution(InstitutionTemplateIdentifier template, Domain d) throws InstitutionNotFoundException {
 		if (this._existsInstitutionTemplate(template)) {
 			InstitutionIdentifier ident = new InstitutionIdentifier(template);
-			InstitutionInstance instance = new InstitutionInstance(this.getInstitutionTemplate(template));
+			InstitutionInstance instance = new InstitutionInstance(this.getInstitutionTemplate(template), d);
 			this._instances.put(ident.toString(), instance);
 			
-			String blackboard_query = "Platform.Global.Institution." + ident.toString();
+			this.evaluate(ident);
+			
+			String blackboard_query = ident.getInboundDataDomain();
 			
 	        try {
 				this._getBlackboardService().subscribe(new BlackboardQuery(blackboard_query), this);
@@ -156,9 +160,16 @@ public class InstitutionServiceImpl extends AbstractDefaultService implements In
 				ClingoResponse response = this._sendClingo(instance.asAsp());
 				if (response.wasSuccessful()) {
 					instance.setHolds(response.getHolds());
+					this.__log("Instance holds updated");
 				}
 			} catch (ClingoException e) {}
 		}
+	}
+	
+	public FluentSet getHoldsSet(InstitutionIdentifier ident) throws InstitutionNotFoundException {
+		InstitutionInstance instance = this.getInstitutionInstance(ident);
+		
+		return instance.getHolds();
 	}
 	
 	protected ClingoResponse _sendClingo(String asp) throws ClingoException {
@@ -187,34 +198,46 @@ public class InstitutionServiceImpl extends AbstractDefaultService implements In
 	protected void _handleBlackboardEvent(String data_domain, String payload) {
         this.__log(String.format("Subscription received: %s from %s", payload, data_domain));
         
-        // Now that we've received an event occurance, we need to set it to occurred($event, i00) and rerun
+        // Now that we've received an event occurrance, we need to set it to occurred($event, i00) and rerun
         this.__log("Regenerating institutional state");
         
-        InstitutionIdentifier inst_key = InstitutionIdentifier.build(
+        final InstitutionIdentifier inst_key = InstitutionIdentifier.build(
         	this._extractInstitutionInstanceFromDataDomain(data_domain)
         );
         
         this.__log(String.format("Institution key: %s", inst_key));
 
-
-
         if (this._existsInstitutionInstance(inst_key)) {
 			try {
-				InstitutionInstance inst = this.getInstitutionInstance(inst_key);
+				final InstitutionInstance inst = this.getInstitutionInstance(inst_key);
 				synchronized(inst) {
 					try {
-						// Fix ClassNotFoundException: http://www.agentscape.org/forums/viewtopic.php?pid=258#p258
+						// Fix ClassNotFoundException for ClingoResponse: http://www.agentscape.org/forums/viewtopic.php?pid=258#p258
 				        ClassLoader original = Thread.currentThread().getContextClassLoader();
 				        Thread.currentThread().setContextClassLoader(ClingoResponse.class.getClassLoader());
 						
 				        ClingoResponse response = this._sendClingo(inst.asAsp(payload));
-						if (response.wasSuccessful()) {
-							inst.setHolds(response.getHolds());
-						}
 						
-				        // when finished put back the original classloader
+				        // when finished put back the original class loader
 				        Thread.currentThread().setContextClassLoader(original);
-					} catch (ClingoException e) {}
+				        
+						if (response.wasSuccessful()) {
+							if (inst.changedHolds(response.getHolds())) {
+								// Update the holdsats
+								inst.setHolds(response.getHolds());
+								
+								// Publish the change
+								try {
+									this._publish(inst_key.getOutboundDataDomain(), inst.getHolds());
+
+								} catch (Exception e) {
+									this.__log(String.format("Unable to post institutional change event: %s", e.getMessage()));
+								}
+							}
+						}
+					} catch (Exception e) {
+						this.__log(String.format("Exception: %s", e.getMessage()));
+					}
 				}
 			} catch (InstitutionNotFoundException e) {
 				this.__log(String.format("Unable to load instance, despite every indication that it exists: %s", inst_key.toString()));
@@ -239,4 +262,42 @@ public class InstitutionServiceImpl extends AbstractDefaultService implements In
 		
 		return null;
 	}
+	
+    protected void _publish(final String data_domain, final Serializable item) throws BlackboardException, Exception {
+        final BlackboardItem bbItem = new BlackboardItem(getServiceID().toString(), "text/plain");
+        
+        bbItem.setData(item);
+        bbItem.setMetaValue("data_domain", data_domain);
+    	
+    	// This wouldn't work unless it was in a a thread..
+		Thread t = new Thread() {
+			public void run() {
+				try {
+					__log(String.format("Publishing %s to %s", data_domain, item.toString()));
+			        
+					// Fix ClassNotFoundException for ClingoResponse: http://www.agentscape.org/forums/viewtopic.php?pid=258#p258
+			        ClassLoader original = Thread.currentThread().getContextClassLoader();
+			        Thread.currentThread().setContextClassLoader(DataHandle.class.getClassLoader());
+					
+			    	_getBlackboardService().publish(
+				    		data_domain,
+				    		bbItem
+				    	);
+					
+			        // when finished put back the original class loader
+			        Thread.currentThread().setContextClassLoader(original);
+			        
+			        __log(String.format("Published '%s' to %s", item.toString(), data_domain));
+				} catch (BlackboardException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		};
+		
+		t.start();
+    }
 }

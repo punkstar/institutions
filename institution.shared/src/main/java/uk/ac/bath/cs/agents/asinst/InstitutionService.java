@@ -10,4 +10,5 @@ public interface InstitutionService extends Service {
 	abstract public InstitutionIdentifier instantiateInstitution(InstitutionTemplateIdentifier template, Domain d) throws InstitutionNotFoundException;
 	abstract public InstitutionInstance getInstitutionInstance(InstitutionIdentifier i) throws InstitutionNotFoundException;
 	abstract public void evaluate(InstitutionIdentifier i) throws InstitutionNotFoundException;
+	abstract public FluentSet getHoldsSet(InstitutionIdentifier i) throws InstitutionNotFoundException;
 }

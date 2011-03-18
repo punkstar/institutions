@@ -1,5 +1,9 @@
 package uk.ac.bath.cs.agents.asinst;
 
+import java.io.Serializable;
+
+import org.iids.aos.blackboardservice.BlackboardQuery;
+
 import uk.ac.bath.cs.agents.instal.CreationEvent;
 import uk.ac.bath.cs.agents.instal.DissolutionEvent;
 import uk.ac.bath.cs.agents.instal.Domain;
@@ -315,13 +319,18 @@ public class ExampleAgent extends NormativeAgent {
             this.__log("Registered template with identifier: " + template);
             InstitutionIdentifier instance = service.instantiateInstitution(template, d);
 
-            this._publishInstitutionalEvent(instance, annbid, new String[] {"bidder_1", "auctioneer_1"});
-
-//            for (int i = 0; i < 5; i++) {
-//            	this.__log("Loop " + i);
-            	this._getInstitutionService().evaluate(instance);
-//            }
+            this._subscribeInstitutionalChanges(instance);
             
+            for(int i = 0; i< 10; i++) {
+            	this._publishInstitutionalEvent(instance, annbid, new String[] {"bidder_1", "auctioneer_1"});
+            }
+            
+            this.__log(
+            	String.format(
+            		"Does perm(annprice(auctioneer_1,bidder_3)) hold? %s",
+            		this._getInstitutionService().getHoldsSet(instance).hasPermission("annprice(auctioneer_1,bidder_3)")
+            	)
+            );
         } catch (Exception e) {
             this.__log("There was an exception: " + e.getMessage());
             e.printStackTrace();
@@ -355,4 +364,8 @@ public class ExampleAgent extends NormativeAgent {
     private void __log(String message) {
         Log.message(String.format("[example_agent]: %s", message));
     }
+
+	protected void _incomingSubscription(String from, FluentSet payload) {
+		this.__log(String.format("Incoming subscription from %s", from));
+	}
 }

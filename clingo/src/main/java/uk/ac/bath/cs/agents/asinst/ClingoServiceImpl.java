@@ -37,7 +37,7 @@ public class ClingoServiceImpl extends AbstractDefaultService implements ClingoS
 	 */
 	public ClingoResponse solve(URL url, int answer_sets) throws ClingoException {
 		try {
-			this.__log(String.format("Solve request received (URL at %s)", url.toString()));
+			//this.__log(String.format("Solve request received (URL at %s)", url.toString()));
 			
 			File asp_file = this._writeUrlToFile(url);
 			
@@ -54,7 +54,7 @@ public class ClingoServiceImpl extends AbstractDefaultService implements ClingoS
 	 */
 	public ClingoResponse solve(String asp, int answer_sets) throws ClingoException {
 		try {
-			this.__log("Solve request received (String)");
+			//this.__log("Solve request received (String)");
 			
 			File asp_file = this._writeStringToFile(asp);
 			
@@ -200,7 +200,7 @@ public class ClingoServiceImpl extends AbstractDefaultService implements ClingoS
 	 */
 	private File __createTempFile() throws IOException {
 		File f = File.createTempFile("clingo", null, this._fileDirectory);
-		this.__log(String.format("Temp file created: %s", f.getAbsoluteFile().toString()));
+		//this.__log(String.format("Temp file created: %s", f.getAbsoluteFile().toString()));
 		return f;
 	}
 	

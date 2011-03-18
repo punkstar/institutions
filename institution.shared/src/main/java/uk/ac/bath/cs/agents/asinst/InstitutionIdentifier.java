@@ -31,4 +31,22 @@ public class InstitutionIdentifier extends Identifier {
 	public static InstitutionIdentifier build(String identifier) {
 		return new InstitutionIdentifier(identifier);
 	}
+	
+	/**
+	 * The data domain for institutions publishing events that are occurring to the institution
+	 * 
+	 * @return
+	 */
+    public String getInboundDataDomain() {
+    	return String.format("Platform.Global.Institution.Inbound.%s", this.toString());
+    }
+    
+    /**
+     * The data domain for institutions publishing events
+     * 
+     * @return
+     */
+    public String getOutboundDataDomain() {
+    	return String.format("Platform.Global.Institution.Outbound.%s", this.toString());
+    }
 }

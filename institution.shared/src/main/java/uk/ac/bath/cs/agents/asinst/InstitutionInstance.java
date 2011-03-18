@@ -14,30 +14,35 @@ import uk.ac.bath.cs.agents.instal.asp.InstalASPTranslator;
 
 public class InstitutionInstance {
 	protected Institution _i;
+	protected Domain _d;
 	
-	protected String[] _holds;
+	protected FluentSet _holds = new FluentSet();
 	
-	public InstitutionInstance(Institution i) {
+	public InstitutionInstance(Institution i, Domain d) {
 		this._i = i;
-		this._holds = new String[] {};
-	}
-	
-	public String[] getHolds() {
-		return this._holds;
-	}
-	
-	public void setHolds(String[] holds) {
-		this._holds = holds;
+		this._d = d;
 	}
 	
 	public boolean doesHold(String test) {
-		for(int i = 0; i < this._holds.length; i++) {
-			if (this._holds[i].equals(test)) {
+		for(int i = 0; i < this._holds.size(); i++) {
+			if (this._holds.get(i).equals(test)) {
 				return true;
 			}
 		}
 		
 		return false;
+	}
+	
+	public FluentSet getHolds() {
+		return this._holds;
+	}
+	
+	public void setHolds(String[] fluents) {
+		this._holds = new FluentSet(fluents);
+	}
+	
+	public boolean changedHolds(String[] fluents) {
+		return this._holds.equals(new FluentSet(fluents));
 	}
 	
 	/**
@@ -46,7 +51,7 @@ public class InstitutionInstance {
 	 * @return
 	 */
 	public String asAsp() {
-		InstalASPTranslator translator = new AnsProlog(this._i, new Domain());
+		InstalASPTranslator translator = new AnsProlog(this._i, this._d);
 		
 		translator.generate();
 		
@@ -54,8 +59,8 @@ public class InstitutionInstance {
 		
 		builder.append("\n% Appending instance previous fluents\n");
 		
-		for(int i = 0; i < this._holds.length; i++) {
-			builder.append("ifluent(").append(this._holds[i]).append(").\n");
+		for(int i = 0; i < this._holds.size(); i++) {
+			builder.append("ifluent(").append(this._holds.get(i)).append(").\n");
 		}
 		
 		return builder.toString();
@@ -65,7 +70,7 @@ public class InstitutionInstance {
 		StringBuilder builder = new StringBuilder(this.asAsp());
 		
 		builder.append("\n% The following event just occurred\n")
-			   .append("occurred(")
+			   .append("observed(")
 		       .append(event)
 		       .append(", i00).");
 		
