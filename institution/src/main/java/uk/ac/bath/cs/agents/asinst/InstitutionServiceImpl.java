@@ -57,10 +57,11 @@ public class InstitutionServiceImpl extends AbstractDefaultService implements In
     }
     
     public void onData(BlackboardItem item) {
-    	String payload = item.getData().toString();
     	String data_domain = item.getMetaValue("data_domain").getValue().toString();
     	
-    	this._handleBlackboardEvent(data_domain, payload);
+    	this.__log(String.format("Received (%s) from %s", item.getContentType(), data_domain));
+    	
+    	this._handleBlackboardEvent(data_domain, item, PubsubType.valueOf(item.getContentType()));
     }
     
     private void __log(String message) {
@@ -130,7 +131,7 @@ public class InstitutionServiceImpl extends AbstractDefaultService implements In
 			
 			this.evaluate(ident);
 			
-			String blackboard_query = ident.getInboundDataDomain();
+			String blackboard_query = ident.getDataDomain();
 			
 	        try {
 				this._getBlackboardService().subscribe(new BlackboardQuery(blackboard_query), this);
@@ -166,8 +167,13 @@ public class InstitutionServiceImpl extends AbstractDefaultService implements In
 		}
 	}
 	
-	public FluentSet getHoldsSet(InstitutionIdentifier ident) throws InstitutionNotFoundException {
+	public FluentSet getCurrentFluents(InstitutionIdentifier ident) throws InstitutionNotFoundException {
 		InstitutionInstance instance = this.getInstitutionInstance(ident);
+		
+		// This might not always hold, but I'd bet it's a pretty good indication.
+		if (instance.getHolds().size() == 0) {
+			this.evaluate(ident);
+		}
 		
 		return instance.getHolds();
 	}
@@ -195,56 +201,74 @@ public class InstitutionServiceImpl extends AbstractDefaultService implements In
 		return response;
 	}
 	
-	protected void _handleBlackboardEvent(String data_domain, String payload) {
-        this.__log(String.format("Subscription received: %s from %s", payload, data_domain));
+	protected void _handleBlackboardEvent(String data_domain, BlackboardItem bb_item, PubsubType type) {
+        this.__log(String.format("Subscription received (%s) from %s", type, data_domain));
         
-        // Now that we've received an event occurrance, we need to set it to occurred($event, i00) and rerun
-        this.__log("Regenerating institutional state");
-        
-        final InstitutionIdentifier inst_key = InstitutionIdentifier.build(
-        	this._extractInstitutionInstanceFromDataDomain(data_domain)
-        );
-        
-        this.__log(String.format("Institution key: %s", inst_key));
-
-        if (this._existsInstitutionInstance(inst_key)) {
-			try {
-				final InstitutionInstance inst = this.getInstitutionInstance(inst_key);
-				synchronized(inst) {
-					try {
-						// Fix ClassNotFoundException for ClingoResponse: http://www.agentscape.org/forums/viewtopic.php?pid=258#p258
-				        ClassLoader original = Thread.currentThread().getContextClassLoader();
-				        Thread.currentThread().setContextClassLoader(ClingoResponse.class.getClassLoader());
-						
-				        ClingoResponse response = this._sendClingo(inst.asAsp(payload));
-						
-				        // when finished put back the original class loader
-				        Thread.currentThread().setContextClassLoader(original);
-				        
-						if (response.wasSuccessful()) {
-							if (inst.changedHolds(response.getHolds())) {
-								// Update the holdsats
-								inst.setHolds(response.getHolds());
-								
-								// Publish the change
-								try {
-									this._publish(inst_key.getOutboundDataDomain(), inst.getHolds());
-
-								} catch (Exception e) {
-									this.__log(String.format("Unable to post institutional change event: %s", e.getMessage()));
-								}
-							}
-						}
-					} catch (Exception e) {
-						this.__log(String.format("Exception: %s", e.getMessage()));
-					}
-				}
-			} catch (InstitutionNotFoundException e) {
-				this.__log(String.format("Unable to load instance, despite every indication that it exists: %s", inst_key.toString()));
-			}
-        } else {
-        	this.__log(String.format("Unknown institution %s", inst_key.toString()));
+        switch (type) {
+        	case INST_EVENT:
+        		String payload = (String) bb_item.getData();
+        		
+	            // Now that we've received an event occurrance, we need to set it to occurred($event, i00) and rerun
+	            this.__log("Regenerating institutional state");
+	            
+	            final InstitutionIdentifier inst_key = InstitutionIdentifier.build(
+	            	this._extractInstitutionInstanceFromDataDomain(data_domain)
+	            );
+	            
+	            this.__log(String.format("Institution key: %s", inst_key));
+	
+	            if (this._existsInstitutionInstance(inst_key)) {
+	    			try {
+	    				final InstitutionInstance inst = this.getInstitutionInstance(inst_key);
+	    				synchronized(inst) {
+	    					try {
+	    						// Fix ClassNotFoundException for ClingoResponse: http://www.agentscape.org/forums/viewtopic.php?pid=258#p258
+	    				        ClassLoader original = Thread.currentThread().getContextClassLoader();
+	    				        Thread.currentThread().setContextClassLoader(ClingoResponse.class.getClassLoader());
+	    						
+	    				        ClingoResponse response = this._sendClingo(inst.asAsp(payload.toString()));
+	    						
+	    				        // when finished put back the original class loader
+	    				        Thread.currentThread().setContextClassLoader(original);
+	    				        
+	    						if (response.wasSuccessful()) {
+	    							if (inst.changedHolds(response.getHolds())) {
+	    								// Update the holdsats
+	    								inst.setHolds(response.getHolds());
+	    								
+	    								// Publish the change
+	    								try {
+	    									this._publish(inst_key.getDataDomain(), inst.getHolds(), PubsubType.INST_FLUENTS);
+	
+	    								} catch (Exception e) {
+	    									this.__log(String.format("Unable to post institutional change event: %s", e.getMessage()));
+	    								}
+	    							}
+	    						}
+	    					} catch (Exception e) {
+	    						this.__log(String.format("Exception: %s", e.getMessage()));
+	    					}
+	    				}
+	    			} catch (InstitutionNotFoundException e) {
+	    				this.__log(String.format("Unable to load instance, despite every indication that it exists: %s", inst_key.toString()));
+	    			}
+	            } else {
+	            	this.__log(String.format("Unknown institution %s", inst_key.toString()));
+	            }
+	            break;
         }
+	}
+	
+	/**
+	 * Called to allow an agent's actions to be monitored by an institution
+	 */
+	public void subscribeToActivityStream(InstitutionIdentifier i, String domain) {
+		try {
+			this._getBlackboardService().subscribe(new BlackboardQuery(domain), this);
+			this.__log(String.format("Subscribed to activity stream on %s", domain));
+		} catch (BlackboardException e) {
+			this.__log(String.format("Unable to subscribe to activity stream on %s", domain));
+		}
 	}
 	
 	/**
@@ -263,17 +287,17 @@ public class InstitutionServiceImpl extends AbstractDefaultService implements In
 		return null;
 	}
 	
-    protected void _publish(final String data_domain, final Serializable item) throws BlackboardException, Exception {
-        final BlackboardItem bbItem = new BlackboardItem(getServiceID().toString(), "text/plain");
+    protected void _publish(final String data_domain, final Serializable item, final PubsubType type) throws BlackboardException, Exception {
+        final BlackboardItem bbItem = new BlackboardItem(getServiceID().toString(), type.toString());
         
         bbItem.setData(item);
         bbItem.setMetaValue("data_domain", data_domain);
     	
-    	// This wouldn't work unless it was in a a thread..
+    	// This wouldn't work unless it was in it's own thread..
 		Thread t = new Thread() {
 			public void run() {
 				try {
-					__log(String.format("Publishing %s to %s", data_domain, item.toString()));
+					__log(String.format("Publishing %s (%s) to %s", data_domain, type, item.toString()));
 			        
 					// Fix ClassNotFoundException for ClingoResponse: http://www.agentscape.org/forums/viewtopic.php?pid=258#p258
 			        ClassLoader original = Thread.currentThread().getContextClassLoader();

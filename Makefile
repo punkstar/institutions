@@ -12,7 +12,7 @@ clingo: shared
 institution:
 	cd institution && mvn clean compile install
 
-agent: instal
+agent: instal shared
 	cd example && mvn clean compile install
 
 shared:

@@ -12,11 +12,11 @@ import org.iids.aos.blackboardservice.BlackboardService.IBlackboardNotification;
 import uk.ac.bath.cs.agents.instal.ExogenousEvent;
 
 abstract class NormativeAgent extends Agent implements IBlackboardNotification {
-	abstract protected void _incomingSubscription(String from, FluentSet payload);
+	abstract protected void _incomingSubscription(String from, BlackboardItem payload, PubsubType type);
 	
     protected void _publishAction(Serializable name) {
         try {
-        	this._publish(this.getAgentDataDomain(), name);
+        	this._publish(this.getAgentDataDomain(), name, PubsubType.AGENT_ACTION);
         } catch (Exception e) {
             this.__log(String.format("Unable to publish agent action: %s", e.getMessage()));
         }
@@ -24,7 +24,7 @@ abstract class NormativeAgent extends Agent implements IBlackboardNotification {
     
     protected void _publishInstitutionalEvent(InstitutionIdentifier inst, ExogenousEvent event, String[] variables) {
     	try {
-    		this._publish(this.getInstitutionDataDomain(inst), event.asVariablesToString(variables));
+    		this._publish(this.getInstitutionDataDomain(inst), event.asVariablesToString(variables), PubsubType.INST_EVENT);
     	} catch (Exception e) {
             this.__log(String.format("Unable to publish institutional event: '%s' because of %s", event.asVariablesToString(variables), e.getMessage()));
             e.printStackTrace();
@@ -32,7 +32,7 @@ abstract class NormativeAgent extends Agent implements IBlackboardNotification {
     }
     
     protected void _subscribeInstitutionalChanges(InstitutionIdentifier inst) {
-		String data_domain = inst.getOutboundDataDomain();
+		String data_domain = inst.getDataDomain();
 		
     	try {
 			this._getBlackboardService().subscribe(new BlackboardQuery(data_domain), this);
@@ -42,10 +42,19 @@ abstract class NormativeAgent extends Agent implements IBlackboardNotification {
 		}
     }
     
-    protected void _publish(String data_domain, Serializable item) throws BlackboardException, Exception {
-        this.__log(String.format("Published '%s' to %s", item.toString(), data_domain));
+    /**
+     * Make an institution subscribe to your action feed.
+     * 
+     * @param inst
+     */
+    protected void _registerWithInstitution(InstitutionIdentifier inst) {
+    	
+    }
+    
+    protected void _publish(String data_domain, Serializable item, PubsubType type) throws BlackboardException, Exception {
+		this.__log(String.format("Publishing %s (%s) to %s", data_domain, type, item.toString()));
         
-        BlackboardItem bbItem = new BlackboardItem(this.getPrimaryHandle().toString(), "text/plain");
+        BlackboardItem bbItem = new BlackboardItem(this.getPrimaryHandle().toString(), type.toString());
         
         bbItem.setData(item);
         bbItem.setMetaValue("data_domain", data_domain);
@@ -58,28 +67,17 @@ abstract class NormativeAgent extends Agent implements IBlackboardNotification {
     
     public void onData(BlackboardItem item) {
     	String data_domain = item.getMetaValue("data_domain").getValue().toString();
-    	this.__log(String.format("Received blackboard subscription from %s", data_domain));
-
-		// Fix ClassNotFoundException for ClingoResponse: http://www.agentscape.org/forums/viewtopic.php?pid=258#p258
-        ClassLoader original = Thread.currentThread().getContextClassLoader();
-        Thread.currentThread().setContextClassLoader(FluentSet.class.getClassLoader());
-		
-        FluentSet payload = (FluentSet) item.getData();
-		
-        // when finished put back the original class loader
-        Thread.currentThread().setContextClassLoader(original);
+    	this.__log(String.format("Received (%s) from %s", item.getContentType(), data_domain));
     	
-    	if (payload == null) {
-    		this.__log("The message received contained no data!");
-    	}
-    	
-    	this.__log(String.format("Received blackboard item: %s", payload.toString()));
-    	
-    	this._incomingSubscription(data_domain, payload);
+    	this._incomingSubscription(data_domain, item, PubsubType.valueOf(item.getContentType()));
     }
     
     protected BlackboardService _getBlackboardService() throws Exception {
     	return this.getServiceBroker().bind(BlackboardService.class);
+    }
+    
+    protected InstitutionService _getInstitutionService() throws Exception {
+		return this.getServiceBroker().bind(InstitutionService.class);
     }
     
     public String getAgentDataDomain() {
@@ -87,7 +85,7 @@ abstract class NormativeAgent extends Agent implements IBlackboardNotification {
     }
     
     public String getInstitutionDataDomain(InstitutionIdentifier inst) {
-    	return inst.getInboundDataDomain();
+    	return inst.getDataDomain();
     }
     
     private void __log(String message) {

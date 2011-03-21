@@ -1,8 +1,6 @@
 package uk.ac.bath.cs.agents.asinst;
 
-import java.io.Serializable;
-
-import org.iids.aos.blackboardservice.BlackboardQuery;
+import org.iids.aos.blackboardservice.BlackboardItem;
 
 import uk.ac.bath.cs.agents.instal.CreationEvent;
 import uk.ac.bath.cs.agents.instal.DissolutionEvent;
@@ -328,23 +326,13 @@ public class ExampleAgent extends NormativeAgent {
             this.__log(
             	String.format(
             		"Does perm(annprice(auctioneer_1,bidder_3)) hold? %s",
-            		this._getInstitutionService().getHoldsSet(instance).hasPermission("annprice(auctioneer_1,bidder_3)")
+            		this._getInstitutionService().getCurrentFluents(instance).hasPermission("annprice(auctioneer_1,bidder_3)")
             	)
             );
         } catch (Exception e) {
             this.__log("There was an exception: " + e.getMessage());
             e.printStackTrace();
         }
-    }
-    
-    protected InstitutionService _getInstitutionService() {
-    	try {
-			return this.getServiceBroker().bind(InstitutionService.class);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		
-		return null;
     }
     
     protected ClingoService _getClingoService() {
@@ -365,7 +353,20 @@ public class ExampleAgent extends NormativeAgent {
         Log.message(String.format("[example_agent]: %s", message));
     }
 
-	protected void _incomingSubscription(String from, FluentSet payload) {
-		this.__log(String.format("Incoming subscription from %s", from));
+	protected void _incomingSubscription(String from, BlackboardItem bb_item, PubsubType type) {
+		this.__log(String.format("Incoming subscription from (%s) %s", type, from));
+		
+		switch (type) {
+			case AGENT_ACTION:
+				// Fix ClassNotFoundException for ClingoResponse: http://www.agentscape.org/forums/viewtopic.php?pid=258#p258
+		        ClassLoader original = Thread.currentThread().getContextClassLoader();
+		        Thread.currentThread().setContextClassLoader(FluentSet.class.getClassLoader());
+				
+		        FluentSet fluents = (FluentSet) bb_item.getData();
+				
+		        // when finished put back the original class loader
+		        Thread.currentThread().setContextClassLoader(original);
+		        break;
+		}
 	}
 }
