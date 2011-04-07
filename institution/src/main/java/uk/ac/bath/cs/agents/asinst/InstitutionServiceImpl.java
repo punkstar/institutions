@@ -136,7 +136,8 @@ public class InstitutionServiceImpl extends AbstractDefaultService implements In
 	        try {
 				this._getBlackboardService().subscribe(new BlackboardQuery(blackboard_query), this);
 				this.__log(String.format("Subscribed to %s", blackboard_query));
-			} catch (BlackboardException e) {
+				this._notifyNewStream(blackboard_query);
+	        } catch (BlackboardException e) {
 				this.__log(String.format("There was an error subscribing to the blackboard (%s)", blackboard_query));
 			}
 			
@@ -323,5 +324,16 @@ public class InstitutionServiceImpl extends AbstractDefaultService implements In
 		};
 		
 		t.start();
+    }
+    
+    /**
+     * Send a notification to the stream notification stream that there is a new feed available for subscription
+     */
+    protected void _notifyNewStream(String data_domain) {
+    	try {
+			this._publish("App.Global.Streams", data_domain, PubsubType.NEW_STREAM);
+		} catch (Exception e) {
+			this.__log("Unable to publish notification of new stream: " + e.getMessage());
+		}
     }
 }

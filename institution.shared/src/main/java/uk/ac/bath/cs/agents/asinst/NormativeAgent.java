@@ -14,6 +14,12 @@ import uk.ac.bath.cs.agents.instal.ExogenousEvent;
 abstract class NormativeAgent extends Agent implements IBlackboardNotification {
 	abstract protected void _incomingSubscription(String from, BlackboardItem payload, PubsubType type);
 	
+	public NormativeAgent() {}
+	
+	public void run() {
+		this._notifyNewStream();
+	}
+	
     protected void _publishAction(Serializable name) {
         try {
         	this._publish(this.getAgentDataDomain(), name, PubsubType.AGENT_ACTION);
@@ -86,6 +92,17 @@ abstract class NormativeAgent extends Agent implements IBlackboardNotification {
     
     public String getInstitutionDataDomain(InstitutionIdentifier inst) {
     	return inst.getDataDomain();
+    }
+    
+    /**
+     * Send a notification to the stream notification stream that there is a new feed available for subscription
+     */
+    protected void _notifyNewStream() {
+    	try {
+			this._publish("App.Global.Streams", this.getAgentDataDomain(), PubsubType.NEW_STREAM);
+		} catch (Exception e) {
+			this.__log("Unable to publish notification of new stream: " + e.getMessage());
+		}
     }
     
     private void __log(String message) {

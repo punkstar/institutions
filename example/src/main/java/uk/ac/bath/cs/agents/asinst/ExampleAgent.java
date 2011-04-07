@@ -22,6 +22,8 @@ public class ExampleAgent extends NormativeAgent {
     
     @Override
     public void run() {
+    	super.run();
+    	
         this.__log("Example agent has started");
         
         try {
