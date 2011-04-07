@@ -1,5 +1,7 @@
 package uk.ac.bath.cs.agents.asinst;
 
+import java.net.URL;
+
 import org.iids.aos.blackboardservice.BlackboardItem;
 
 import uk.ac.bath.cs.agents.instal.CreationEvent;
@@ -313,24 +315,26 @@ public class ExampleAgent extends NormativeAgent {
             
             InstitutionService service =  this._getInstitutionService();
             
-            this.__log("Registering template");
-            InstitutionTemplateIdentifier template = service.addInstitutionTemplate(inst, "dutch");
-
-            this.__log("Registered template with identifier: " + template);
-            InstitutionIdentifier instance = service.instantiateInstitution(template, d);
-
-            this._subscribeInstitutionalChanges(instance);
+//            this.__log("Registering template");
+//            InstitutionTemplateIdentifier template = service.addInstitutionTemplate(inst, "dutch");
+//
+//            this.__log("Registered template with identifier: " + template);
+//            InstitutionIdentifier instance = service.instantiateInstitution(template, d);
+//
+//            this._subscribeInstitutionalChanges(instance);
+//            
+//            for(int i = 0; i< 10; i++) {
+//            	this._publishInstitutionalEvent(instance, annbid, new String[] {"bidder_1", "auctioneer_1"});
+//            }
+//            
+//            this.__log(
+//            	String.format(
+//            		"Does perm(annprice(auctioneer_1,bidder_3)) hold? %s",
+//            		this._getInstitutionService().getCurrentFluents(instance).hasPermission("annprice(auctioneer_1,bidder_3)")
+//            	)
+//            );
             
-            for(int i = 0; i< 10; i++) {
-            	this._publishInstitutionalEvent(instance, annbid, new String[] {"bidder_1", "auctioneer_1"});
-            }
-            
-            this.__log(
-            	String.format(
-            		"Does perm(annprice(auctioneer_1,bidder_3)) hold? %s",
-            		this._getInstitutionService().getCurrentFluents(instance).hasPermission("annprice(auctioneer_1,bidder_3)")
-            	)
-            );
+            service.addInstitutionTemplate(new URL("http://bartley.local:8080/wgrid.ial"), "wgrid from a URL");
         } catch (Exception e) {
             this.__log("There was an exception: " + e.getMessage());
             e.printStackTrace();

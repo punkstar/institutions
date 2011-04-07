@@ -36,6 +36,20 @@
             <artifactId>blackboard-service-interface</artifactId>
             <version>1.0</version>
          </dependency>
+        <dependency>
+            <groupId>org.antlr.runtime</groupId>
+            <artifactId>antlr</artifactId>
+            <version>3.3</version>
+            <scope>system</scope>
+            <systemPath>${user.home}/Desktop/instal2asp/lib/antlr-3.3-complete.jar</systemPath>
+        </dependency>
+        <dependency>
+            <groupId>uk.ac.bath.cs.agents.instal</groupId>
+            <artifactId>parser</artifactId>
+            <version>1.0</version>
+            <scope>system</scope>
+            <systemPath>${user.home}/Desktop/instal2asp/build/instal-parser.jar</systemPath>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
