@@ -288,6 +288,43 @@ public class InstitutionServiceImpl extends AbstractDefaultService implements In
 		return null;
 	}
 	
+	public FluentSet getHypotheticalFluents(final InstitutionIdentifier inst_key, String action) {
+        // Now that we've received an event occurrance, we need to set it to occurred($event, i00) and rerun
+        this.__log("Regenerating institutional state");
+
+        this.__log(String.format("Institution key: %s", inst_key));
+
+        if (this._existsInstitutionInstance(inst_key)) {
+			try {
+				final InstitutionInstance inst = this.getInstitutionInstance(inst_key);
+				synchronized(inst) {
+					try {
+						// Fix ClassNotFoundException for ClingoResponse: http://www.agentscape.org/forums/viewtopic.php?pid=258#p258
+				        ClassLoader original = Thread.currentThread().getContextClassLoader();
+				        Thread.currentThread().setContextClassLoader(ClingoResponse.class.getClassLoader());
+						
+				        ClingoResponse response = this._sendClingo(inst.asAsp(action));
+						
+				        // when finished put back the original class loader
+				        Thread.currentThread().setContextClassLoader(original);
+				        
+						if (response.wasSuccessful()) {
+							return new FluentSet(response.getHolds());
+						}
+					} catch (Exception e) {
+						this.__log(String.format("Exception: %s", e.getMessage()));
+					}
+				}
+			} catch (InstitutionNotFoundException e) {
+				this.__log(String.format("Unable to load instance, despite every indication that it exists: %s", inst_key.toString()));
+			}
+        } else {
+        	this.__log(String.format("Unknown institution %s", inst_key.toString()));
+        }
+        
+        return new FluentSet();
+	}
+	
     protected void _publish(final String data_domain, final Serializable item, final PubsubType type) throws BlackboardException, Exception {
         final BlackboardItem bbItem = new BlackboardItem(getServiceID().toString(), type.toString());
         

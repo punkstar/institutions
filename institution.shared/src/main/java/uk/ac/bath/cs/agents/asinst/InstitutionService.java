@@ -12,4 +12,5 @@ public interface InstitutionService extends Service {
 	abstract public void evaluate(InstitutionIdentifier i) throws InstitutionNotFoundException;
 	abstract public FluentSet getCurrentFluents(InstitutionIdentifier i) throws InstitutionNotFoundException;
 	abstract public void subscribeToActivityStream(InstitutionIdentifier i, String data_domain);
+	abstract public FluentSet getHypotheticalFluents(InstitutionIdentifier i, String action);
 }
