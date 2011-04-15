@@ -1,6 +1,7 @@
 package uk.ac.bath.cs.agents.asinst;
 
 import uk.ac.bath.cs.agents.instal.Domain;
+import uk.ac.bath.cs.agents.instal.InitiallyFluent;
 import uk.ac.bath.cs.agents.instal.Institution;
 import uk.ac.bath.cs.agents.instal.asp.AnsProlog;
 import uk.ac.bath.cs.agents.instal.asp.InstalASPTranslator;
@@ -18,9 +19,20 @@ public class InstitutionInstance {
 	
 	protected FluentSet _holds = new FluentSet();
 	
-	public InstitutionInstance(Institution i, Domain d) {
+	/**
+	 * @TODO Do something with the initially fluent
+	 * 
+	 * @param i
+	 * @param d
+	 * @param initially_fluents
+	 */
+	public InstitutionInstance(Institution i, Domain d, InitiallyFluent[] initially_fluents) {
 		this._i = i;
 		this._d = d;
+		
+		for (InitiallyFluent f : initially_fluents) {
+			this._i.initially(f);
+		}
 	}
 	
 	public boolean doesHold(String test) {

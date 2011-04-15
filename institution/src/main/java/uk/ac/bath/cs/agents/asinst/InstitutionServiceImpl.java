@@ -14,6 +14,7 @@ import org.iids.aos.blackboardservice.BlackboardService.IBlackboardNotification;
 import org.iids.aos.service.AbstractDefaultService;
 
 import uk.ac.bath.cs.agents.instal.Domain;
+import uk.ac.bath.cs.agents.instal.InitiallyFluent;
 import uk.ac.bath.cs.agents.instal.Institution;
 
 /**
@@ -123,10 +124,10 @@ public class InstitutionServiceImpl extends AbstractDefaultService implements In
 	/**
 	 * Create a new instance of an institution
 	 */
-	public InstitutionIdentifier instantiateInstitution(InstitutionTemplateIdentifier template, Domain d) throws InstitutionNotFoundException {
+	public InstitutionIdentifier instantiateInstitution(InstitutionTemplateIdentifier template, Domain d, InitiallyFluent[] initially_fluents) throws InstitutionNotFoundException {
 		if (this._existsInstitutionTemplate(template)) {
 			InstitutionIdentifier ident = new InstitutionIdentifier(template);
-			InstitutionInstance instance = new InstitutionInstance(this.getInstitutionTemplate(template), d);
+			InstitutionInstance instance = new InstitutionInstance(this.getInstitutionTemplate(template), d, initially_fluents);
 			this._instances.put(ident.toString(), instance);
 			
 			this.evaluate(ident);
@@ -150,7 +151,7 @@ public class InstitutionServiceImpl extends AbstractDefaultService implements In
 	}
 	
 	public InstitutionIdentifier instantiateInstitution(InstitutionTemplateIdentifier template) throws InstitutionNotFoundException {
-		return this.instantiateInstitution(template, null);
+		return this.instantiateInstitution(template, null, null);
 	}
 	
 	public void evaluate(InstitutionIdentifier ident) throws InstitutionNotFoundException {
