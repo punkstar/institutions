@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.io.Serializable;
 import java.net.URL;
 import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,8 +39,8 @@ import uk.ac.bath.cs.agents.instal.parser.InstALParser;
  */
 
 public class InstitutionServiceImpl extends AbstractDefaultService implements InstitutionService, IBlackboardNotification {
-	Hashtable<String, Institution> _templates = new Hashtable<String, Institution>();
-	Hashtable<String, InstitutionInstance> _instances = new Hashtable<String, InstitutionInstance>();
+	Hashtable<InstitutionTemplateIdentifier, Institution> _templates = new Hashtable<InstitutionTemplateIdentifier, Institution>();
+	Hashtable<InstitutionIdentifier, InstitutionInstance> _instances = new Hashtable<InstitutionIdentifier, InstitutionInstance>();
 	
 	Pattern _pattern_instFromDataDomain = Pattern.compile("([\\w-]+)$");
 	
@@ -82,9 +83,9 @@ public class InstitutionServiceImpl extends AbstractDefaultService implements In
      */
 	public InstitutionTemplateIdentifier addInstitutionTemplate(Institution i, String description) {
 		InstitutionTemplateIdentifier ident = new InstitutionTemplateIdentifier(description);
-		this._templates.put(ident.toString(), i);
+		this._templates.put(ident, i);
 		
-		this.__log(String.format("Adding '%s' institution template to our library", ident.toString()));
+		this.__log(String.format("Adding '%s' institution template to our library: %s", ident.toString(), i.toString()));
 		
 		return ident;
 	}
@@ -114,15 +115,30 @@ public class InstitutionServiceImpl extends AbstractDefaultService implements In
 			
 			url_stream.close();
 			
-			return this.addInstitutionTemplate(new Institution("test", 1), description);
+			return this.addInstitutionTemplate(i, description);
 		} catch (Exception e) {
 			throw new ClingoException(e.getMessage());
 		}
 	}
 	
+	/**
+	 * @param key
+	 * @return
+	 * @throws InstitutionNotFoundException
+	 */
 	public Institution getInstitutionTemplate(InstitutionTemplateIdentifier key) throws InstitutionNotFoundException {
 		if (this._existsInstitutionTemplate(key)) {
-			return this._templates.get(key.toString());
+			// I don't know why, but we seem to have to use the ACTUAL key from the ht, even though we've established they're equal.. beats me.
+			Iterator<InstitutionTemplateIdentifier> iter = this._templates.keySet().iterator();
+			while (iter.hasNext()) {
+				InstitutionTemplateIdentifier ht_key = iter.next();
+				
+				if (key.equals(ht_key)) {
+					return this._templates.get(ht_key);
+				}
+			}
+
+			throw new InstitutionNotFoundException(String.format("Institution template, %s, was null, but it was found", key.getDescription()));
 		} else {
 			throw new InstitutionNotFoundException(String.format("Institution template, %s, not found", key.getDescription()));
 		}
@@ -131,11 +147,23 @@ public class InstitutionServiceImpl extends AbstractDefaultService implements In
 	/**
 	 * Check the existence of a template with the given identifier.
 	 * 
+	 * Implemented containsKey() again because it didn't seem to be picking up on the equals() method of the values in the Hashtable.
+	 * 
 	 * @param t
 	 * @return
 	 */
 	protected boolean _existsInstitutionTemplate(InstitutionTemplateIdentifier t) {
-		return this._templates.containsKey(t.toString());
+		Iterator<InstitutionTemplateIdentifier> iter = this._templates.keySet().iterator();
+		while (iter.hasNext()) {
+			InstitutionTemplateIdentifier key = iter.next();
+			
+			if (key.equals(t)) {
+				this.__log("[_existsInstitutionTemplate] Found template!  Is null? " + (this._templates.get(key) == null));
+				return true;
+			}
+		}
+		
+		return false;
 	}
 	
 	/**
@@ -145,18 +173,37 @@ public class InstitutionServiceImpl extends AbstractDefaultService implements In
 	 * @return
 	 */
 	protected boolean _existsInstitutionInstance(InstitutionIdentifier i) {
-		return this._instances.containsKey(i.toString());
+		Iterator<InstitutionIdentifier> iter = this._instances.keySet().iterator();
+		while (iter.hasNext()) {
+			InstitutionIdentifier key = iter.next();
+			
+			if (key.equals(i)) {
+				return true;
+			}
+		}
+		
+		return false;
 	}
 
 	/**
 	 * Get an already created instantiated institution
 	 * @throws InstitutionNotFoundException 
 	 */
-	public InstitutionInstance getInstitutionInstance(InstitutionIdentifier i) throws InstitutionNotFoundException {
-		if (this._existsInstitutionInstance(i)) {
-			return this._instances.get(i.toString());
+	public InstitutionInstance getInstitutionInstance(InstitutionIdentifier key) throws InstitutionNotFoundException {
+		if (this._existsInstitutionInstance(key)) {
+			// I don't know why, but we seem to have to use the ACTUAL key from the ht, even though we've established they're equal.. beats me.
+			Iterator<InstitutionIdentifier> iter = this._instances.keySet().iterator();
+			while (iter.hasNext()) {
+				InstitutionIdentifier ht_key = iter.next();
+				
+				if (key.equals(ht_key)) {
+					return this._instances.get(ht_key);
+				}
+			}
+
+			throw new InstitutionNotFoundException(String.format("Institution template, %s, was null, but it was found", key.getTemplate().getDescription()));
 		} else {
-			throw new InstitutionNotFoundException(String.format("Instantiated Institution of type '%s', with identifier '%s' not found", i.getTemplate().getDescription(), i.toString()));
+			throw new InstitutionNotFoundException(String.format("Institution template, %s, not found", key.getTemplate().getDescription()));
 		}
 	}
 
@@ -165,27 +212,31 @@ public class InstitutionServiceImpl extends AbstractDefaultService implements In
 	 */
 	public InstitutionIdentifier instantiateInstitution(InstitutionTemplateIdentifier template, Domain d, InitiallyFluent[] initially_fluents) throws InstitutionNotFoundException {
 		if (this._existsInstitutionTemplate(template)) {
-			InstitutionIdentifier ident = new InstitutionIdentifier(template);
-			InstitutionInstance instance = new InstitutionInstance(this.getInstitutionTemplate(template), d, initially_fluents);
-			this._instances.put(ident.toString(), instance);
-			
-			this.evaluate(ident);
-			
-			String blackboard_query = ident.getDataDomain();
-			
-	        try {
-				this._getBlackboardService().subscribe(new BlackboardQuery(blackboard_query), this);
-				this.__log(String.format("Subscribed to %s", blackboard_query));
-				this._notifyNewStream(blackboard_query);
-	        } catch (BlackboardException e) {
-				this.__log(String.format("There was an error subscribing to the blackboard (%s)", blackboard_query));
+			if (this.getInstitutionTemplate(template) != null) {
+				InstitutionIdentifier ident = new InstitutionIdentifier(template);
+				InstitutionInstance instance = new InstitutionInstance(this.getInstitutionTemplate(template), d, initially_fluents);
+				this._instances.put(ident, instance);
+				
+				this.evaluate(ident);
+				
+				String blackboard_query = ident.getDataDomain();
+				
+		        try {
+					this._getBlackboardService().subscribe(new BlackboardQuery(blackboard_query), this);
+					this.__log(String.format("Subscribed to %s", blackboard_query));
+					this._notifyNewStream(blackboard_query);
+		        } catch (BlackboardException e) {
+					this.__log(String.format("There was an error subscribing to the blackboard (%s)", blackboard_query));
+				}
+				
+				this.__log(String.format("Creating an instance of %s", template.getDescription()));
+				
+				return ident;
+			} else {
+				throw new InstitutionNotFoundException(String.format("Institution template (%s) with description '%s' was found, but was null", template.getUid(), template.getDescription()));
 			}
-			
-			this.__log(String.format("Creating an instance of %s", template.getDescription()));
-			
-			return ident;
 		} else {
-			throw new InstitutionNotFoundException(String.format("Institution template with description '%s' not found", template.getDescription()));
+			throw new InstitutionNotFoundException(String.format("Institution template (%s) with description '%s' not found", template.getUid(), template.getDescription()));
 		}
 	}
 	

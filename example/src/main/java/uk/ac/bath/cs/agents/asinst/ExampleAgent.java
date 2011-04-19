@@ -10,6 +10,7 @@ import uk.ac.bath.cs.agents.instal.Domain;
 import uk.ac.bath.cs.agents.instal.ExogenousEvent;
 import uk.ac.bath.cs.agents.instal.Fluent;
 import uk.ac.bath.cs.agents.instal.Generates;
+import uk.ac.bath.cs.agents.instal.InitiallyFluent;
 import uk.ac.bath.cs.agents.instal.Initiates;
 import uk.ac.bath.cs.agents.instal.Institution;
 import uk.ac.bath.cs.agents.instal.NormativeEvent;
@@ -334,7 +335,21 @@ public class ExampleAgent extends NormativeAgent {
 //            	)
 //            );
             
-            service.addInstitutionTemplate(new URL("http://bartley.local:8080/wgrid.ial"), "wgrid from a URL");
+            InstitutionTemplateIdentifier template = service.addInstitutionTemplate(new URL("http://bartley.local:8080/wgrid.ial"), "wgrid from a URL");
+            
+            this.__log(String.format("Registered template with id: %s", template.toString()));
+            this.__log(String.format("Registered template with id: %s", template.getDescription()));
+            this.__log(String.format("Registered template with id: %s", template.getUid()));
+            
+            this.__log(String.format("Registered template with id: %s", template.toString()));
+            this.__log(String.format("Registered template with id: %s", template.getDescription()));
+            this.__log(String.format("Registered template with id: %s", template.getUid()));
+            
+            InstitutionIdentifier ident_1 = service.instantiateInstitution(template, new Domain(), new InitiallyFluent[] {});
+            InstitutionIdentifier ident_2 = service.instantiateInstitution(template, new Domain(), new InitiallyFluent[] {});
+            
+            this.__log(String.format("Instantiation institution to %s", ident_1.toString()));
+            this.__log(String.format("Instantiation institution to %s", ident_2.toString()));
         } catch (Exception e) {
             this.__log("There was an exception: " + e.getMessage());
             e.printStackTrace();

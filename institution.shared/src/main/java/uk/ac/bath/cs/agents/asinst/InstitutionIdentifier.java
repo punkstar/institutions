@@ -40,4 +40,9 @@ public class InstitutionIdentifier extends Identifier {
     public String getDataDomain() {
     	return String.format("Platform.Global.Institution.%s", this.toString());
     }
+    
+	@Override
+	public boolean equals(Object i) {
+		return super.equals(i);
+	}
 }

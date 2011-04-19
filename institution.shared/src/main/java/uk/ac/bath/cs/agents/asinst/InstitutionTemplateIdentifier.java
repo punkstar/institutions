@@ -19,4 +19,9 @@ public class InstitutionTemplateIdentifier extends Identifier {
 	public String toString() {
 		return this.getDescription();
 	}
+	
+	@Override
+	public boolean equals(Object i) {
+		return super.equals(i);
+	}
 }
