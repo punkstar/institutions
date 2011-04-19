@@ -46,9 +46,6 @@ public class InstitutionServiceImpl extends AbstractDefaultService implements In
         this.__log("Service online");
         
         ClingoResponse load_response = new ClingoResponse(null, null, 0);
-        try {
-			CharStream cs = new ANTLRInputStream(null);
-		} catch (IOException e) {}
     }
     
     protected BlackboardService _getBlackboardService() {
@@ -94,7 +91,18 @@ public class InstitutionServiceImpl extends AbstractDefaultService implements In
 	public InstitutionTemplateIdentifier addInstitutionTemplate(URL url, String description) throws ClingoException {
 		try {
 			InputStream url_stream = url.openStream();
-			CharStream cs = new ANTLRInputStream(url_stream);
+			
+			// Fix ClassNotFoundException for ClingoResponse: http://www.agentscape.org/forums/viewtopic.php?pid=258#p258
+	        ClassLoader original = Thread.currentThread().getContextClassLoader();
+	        Thread.currentThread().setContextClassLoader(CharStream.class.getClassLoader());
+			
+	        CharStream cs;
+			
+	        Thread.currentThread().setContextClassLoader(ANTLRInputStream.class.getClassLoader());
+	        cs = new ANTLRInputStream(url_stream);
+	        
+	        // when finished put back the original class loader
+	        Thread.currentThread().setContextClassLoader(original);
 			
             InstALLexer lex = new InstALLexer(cs);
             CommonTokenStream tokens = new CommonTokenStream(lex);
