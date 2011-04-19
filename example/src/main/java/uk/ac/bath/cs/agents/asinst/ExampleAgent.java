@@ -142,7 +142,7 @@ public class ExampleAgent extends NormativeAgent {
     	    i1.result(bid.pow(), "B", "A")
     	      .result(bid.perm(), "B", "A")
     	      .result(annbid.perm(), "B", "A");
-    	    
+    	     
     	    inst.obl(obl)
     	        .generates(g1)
     	        .terminates(t1)
@@ -276,7 +276,7 @@ public class ExampleAgent extends NormativeAgent {
             Generates g11 = new Generates(bidto);
             Terminates t8 = new Terminates(biddl);
             Initiates i10 = new Initiates(biddl);
-            
+                        
             g11.result(biddl);
             t8.result(pricedl.pow());
             i10.result(biddl.pow());
@@ -320,17 +320,19 @@ public class ExampleAgent extends NormativeAgent {
             InstitutionIdentifier instance = service.instantiateInstitution(template, d);
 
             this._subscribeInstitutionalChanges(instance);
-            
-            for(int i = 0; i< 10; i++) {
-            	this._publishInstitutionalEvent(instance, annbid, new String[] {"bidder_1", "auctioneer_1"});
-            }
-            
             this.__log(
             	String.format(
             		"Does perm(annprice(auctioneer_1,bidder_3)) hold? %s",
             		this._getInstitutionService().getCurrentFluents(instance).hasPermission("annprice(auctioneer_1,bidder_3)")
             	)
             );
+            
+            FluentSet fs = service.getHypotheticalFluents(instance, "annbid(bidder_1,auctioneer_1");
+            
+            this.__log(fs.toString());
+            
+            this._publishInstitutionalEvent(instance, annbid, new String[] {"bidder_1", "auctioneer_1"});
+            
         } catch (Exception e) {
             this.__log("There was an exception: " + e.getMessage());
             e.printStackTrace();

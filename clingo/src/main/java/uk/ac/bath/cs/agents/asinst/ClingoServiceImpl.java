@@ -76,6 +76,8 @@ public class ClingoServiceImpl extends AbstractDefaultService implements ClingoS
 	/**
 	 * Actually execute clingo
 	 * 
+	 * @TODO Do something with the error stream!
+	 * 
 	 * @param f
 	 * @param answer_sets
 	 * @return
