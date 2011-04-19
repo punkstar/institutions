@@ -1,10 +1,16 @@
 package uk.ac.bath.cs.agents.asinst;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.Serializable;
+import java.net.URL;
 import java.util.Hashtable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.antlr.runtime.ANTLRInputStream;
+import org.antlr.runtime.CharStream;
+import org.antlr.runtime.CommonTokenStream;
 import org.iids.aos.blackboardservice.BlackboardException;
 import org.iids.aos.blackboardservice.BlackboardItem;
 import org.iids.aos.blackboardservice.BlackboardQuery;
@@ -16,6 +22,8 @@ import org.iids.aos.service.AbstractDefaultService;
 import uk.ac.bath.cs.agents.instal.Domain;
 import uk.ac.bath.cs.agents.instal.InitiallyFluent;
 import uk.ac.bath.cs.agents.instal.Institution;
+import uk.ac.bath.cs.agents.instal.parser.InstALLexer;
+import uk.ac.bath.cs.agents.instal.parser.InstALParser;
 
 /**
  * 
@@ -79,6 +87,37 @@ public class InstitutionServiceImpl extends AbstractDefaultService implements In
 		this.__log(String.format("Adding '%s' institution template to our library", ident.toString()));
 		
 		return ident;
+	}
+	
+	public InstitutionTemplateIdentifier addInstitutionTemplate(URL url, String description) throws ClingoException {
+		try {
+			InputStream url_stream = url.openStream();
+			
+			// Fix ClassNotFoundException for ClingoResponse: http://www.agentscape.org/forums/viewtopic.php?pid=258#p258
+	        ClassLoader original = Thread.currentThread().getContextClassLoader();
+	        Thread.currentThread().setContextClassLoader(CharStream.class.getClassLoader());
+			
+	        CharStream cs;
+			
+	        Thread.currentThread().setContextClassLoader(ANTLRInputStream.class.getClassLoader());
+	        cs = new ANTLRInputStream(url_stream);
+	        
+	        // when finished put back the original class loader
+	        Thread.currentThread().setContextClassLoader(original);
+			
+            InstALLexer lex = new InstALLexer(cs);
+            CommonTokenStream tokens = new CommonTokenStream(lex);
+            InstALParser g = new InstALParser(tokens, null);
+            
+            g.instal_specification();
+            Institution i = g.i;
+			
+			url_stream.close();
+			
+			return this.addInstitutionTemplate(new Institution("test", 1), description);
+		} catch (Exception e) {
+			throw new ClingoException(e.getMessage());
+		}
 	}
 	
 	public Institution getInstitutionTemplate(InstitutionTemplateIdentifier key) throws InstitutionNotFoundException {

@@ -17,6 +17,10 @@
             <id>agentscape-public</id>
             <url>http://repo.agentscape.org/repo</url>
         </repository>
+        <repository>
+           <id>thirdparty</id>
+           <url>http://bartley.local:8080/nexus-webapp-1.9.1/content/repositories/thirdparty</url>
+         </repository>
     </repositories>
     <dependencies>
         <dependency>
@@ -35,6 +39,17 @@
             <groupId>org.iids.aos</groupId>
             <artifactId>blackboard-service-interface</artifactId>
             <version>1.0</version>
+         </dependency>
+         <dependency>
+           <groupId>org.antlr.runtime</groupId>
+           <artifactId>antlr-complete</artifactId>
+           <version>3.3</version>
+           <classifier>complete</classifier>
+         </dependency>
+         <dependency>
+           <groupId>uk.ac.bath.cs.agents.instal</groupId>
+           <artifactId>instal-parser</artifactId>
+           <version>1.0</version>
          </dependency>
     </dependencies>
     <build>
